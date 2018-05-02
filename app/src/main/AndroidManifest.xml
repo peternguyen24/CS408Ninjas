@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.kaist.ninjas.cs408ninjas">
-    <uses-feature android:name="android.hardware.camera"
-        android:required="true" />
+
+    <uses-feature android:name="android.hardware.camera2.full"/>
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.raw" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -22,12 +25,17 @@
         <service
             android:name=".MainBackground"
             android:enabled="true"
-            android:exported="false" >
-            <intent-filter android:label="Ninjas Background" >
-                <action android:name="com.kaist.ninjas.cs408ninjas.MAIN_BACKGROUND"/>
+            android:exported="false">
+            <intent-filter android:label="Ninjas Background">
+                <action android:name="com.kaist.ninjas.cs408ninjas.MAIN_BACKGROUND" />
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".CameraDetectionPreview"
+            android:label="@string/title_activity_camera_detection_preview">
+
+        </activity>
     </application>
 
 </manifest>

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CS408Ninjas</string>
+    <string name="title_activity_camera_detection_preview">CameraDetectionPreview</string>
 </resources>

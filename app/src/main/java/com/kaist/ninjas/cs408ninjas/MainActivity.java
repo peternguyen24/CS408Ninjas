@@ -28,6 +28,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Button volumeUpButton = findViewById(R.id.volume_up_button);
         Button volumeDownButton  = findViewById(R.id.volume_down_button);
         Button notifyButton = findViewById(R.id.notify_button);
+        Button cameraPreviewButton = findViewById(R.id.preview_button);
         playButton.setOnClickListener(this);
         pauseButton.setOnClickListener(this);
         nextButton.setOnClickListener(this);
@@ -36,6 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         volumeUpButton.setOnClickListener(this);
         volumeDownButton.setOnClickListener(this);
         notifyButton.setOnClickListener(this);
+        cameraPreviewButton.setOnClickListener(this);
     }
 
     private void updateNotification() {
@@ -83,6 +85,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             case R.id.notify_button: {
                 updateNotification();
+                break;
+            }
+
+            case R.id.preview_button : {
+                Intent mIntent = new Intent(this, CameraDetectionPreview.class);
+                startActivity(mIntent);
                 break;
             }
         }
