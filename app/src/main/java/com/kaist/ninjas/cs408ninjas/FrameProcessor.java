@@ -1,5 +1,6 @@
 package com.kaist.ninjas.cs408ninjas;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.opencv.core.Mat;
@@ -9,16 +10,10 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.util.TimerTask;
 
-public class IntervalBackgroundTask extends TimerTask {
+public class FrameProcessor {
 
-    @Override
-    public void run() {
-        Log.i("INTERVAL JOB", "started");
-    }
-
-    public void doOnce(String inDir, String outDir){
-        Log.i("OpenCV", "OpenCV loaded successfully");
-
+    public static String TAG = "FRAME PROCESSOR";
+    public static void test(String inDir, String outDir){
         String inputFileName="image";
         String inputExtension = "jpg";
 //        String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
@@ -26,9 +21,9 @@ public class IntervalBackgroundTask extends TimerTask {
         String outputExtension = "png";
         String inputFilePath = inDir + File.separator + inputFileName + "." + inputExtension;
 
-        Log.d (this.getClass().getName(), "loading " + inputFilePath + "...");
+        Log.d (TAG, "loading " + inputFilePath + "...");
         Mat image = Imgcodecs.imread(inputFilePath);
-        Log.d (this.getClass().getName(), "width of " + inputFileName + ": " + image.width());
+        Log.d (TAG, "width of " + inputFileName + ": " + image.width());
         // if width is 0 then it did not read your image.
 
 
@@ -39,7 +34,7 @@ public class IntervalBackgroundTask extends TimerTask {
         Mat im_canny = new Mat();  // you have to initialize output image before giving it to the Canny method
         Imgproc.Canny(image, im_canny, threshold1, threshold2);
         String cannyFilename = outDir + File.separator + inputFileName + "_canny-" + threshold1 + "-" + threshold2 + "." + outputExtension;
-        Log.d (this.getClass().getName(), "Writing " + cannyFilename);
+        Log.d (TAG, "Writing " + cannyFilename);
         Imgcodecs.imwrite(cannyFilename, im_canny);}
 
 }

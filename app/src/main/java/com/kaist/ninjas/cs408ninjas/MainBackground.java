@@ -28,7 +28,6 @@ import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
@@ -118,12 +117,17 @@ public class MainBackground extends Service {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
+
+                String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+                String outputDir = getCacheDir().getAbsolutePath();
+                FrameProcessor.test(inputDir,outputDir);
+
                 final Image image;
                 image = reader.acquireLatestImage();
 //                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 //                byte[] bytes = new byte[buffer.capacity()];
 //                buffer.get(bytes);
-                image.close();
+//                image.close();
 //                Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 //                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 //                runOnUiThread(new Runnable() {
@@ -302,9 +306,9 @@ public class MainBackground extends Service {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                 {
-                    String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
-                    String outputDir = getCacheDir().getAbsolutePath();
-                    intervalTask.doOnce(inputDir,outputDir);
+//                    String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+//                    String outputDir = getCacheDir().getAbsolutePath();
+//                    intervalTask.doOnce(inputDir,outputDir);
                 } break;
                 default:
                 {
