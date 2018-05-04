@@ -10,18 +10,25 @@
         android:id="@+id/rewind_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/volume_up_button"
+        android:layout_centerHorizontal="true"
+        android:text="Rewind" />
+
+    <Button
+        android:id="@+id/preview_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="242dp"
-        android:text="Rewind" />
+        android:layout_marginBottom="169dp"
+        android:text="Camera Open" />
 
     <Button
         android:id="@+id/prev_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/next_button"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="242dp"
         android:text="Prev" />
 
     <Button
@@ -30,43 +37,38 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="53dp"
         android:text="Play" />
 
     <Button
         android:id="@+id/pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/play_button"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="114dp"
         android:text="Pause" />
 
     <Button
         android:id="@+id/next_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/pause_button"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="174dp"
         android:text="Next" />
 
     <Button
         android:id="@+id/volume_down_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/prev_button"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="113dp"
         android:text="VOLUME DOWN" />
 
     <Button
         android:id="@+id/volume_up_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/volume_down_button"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="178dp"
         android:text="VOLUME UP" />
 
     <Button
