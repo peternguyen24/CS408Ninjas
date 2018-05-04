@@ -11,9 +11,25 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
+
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private MediaControllerHub mediaControllerHub;
+    static {
+        if (OpenCVLoader.initDebug()) {
+            Log.i("OpenCV","OpenCV initialize success");
+        } else {
+            Log.i("OpenCV","OpenCV initialize failed");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

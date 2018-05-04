@@ -11,6 +11,14 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
 import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -88,5 +96,37 @@ public class MainBackground extends Service {
     public IBinder onBind(Intent intent) {
         // Never bind this service
         return null;
+    }
+
+
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+                    String outputDir = getCacheDir().getAbsolutePath();
+                    intervalTask.doOnce(inputDir,outputDir);
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        if (!OpenCVLoader.initDebug()) {
+            Log.d("OpenCV", "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
+        } else {
+            Log.d("OpenCV", "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 }
