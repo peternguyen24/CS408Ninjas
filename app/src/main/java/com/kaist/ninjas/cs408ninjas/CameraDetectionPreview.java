@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -52,7 +53,8 @@ public class CameraDetectionPreview extends Activity {
     private HandlerThread backgroundThread;
     private Handler backgroundHandler;
     private CaptureRequest.Builder captureRequestBuilder;
-    ImageReader.OnImageAvailableListener readerListener;
+    private ImageReader.OnImageAvailableListener readerListener;
+    private ImageReader reader;
 
     private static final String[] CAMERA_PERMISSIONS = {
             Manifest.permission.CAMERA
@@ -75,10 +77,7 @@ public class CameraDetectionPreview extends Activity {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, CAMERA_PERMISSIONS, 1);
             }
-//            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-//                Log.i("VAI LOZ CAI GI THE NAY", "WTF");
-//                return;
-//            }
+
             myCameraManage.openCamera(getCamera(myCameraManage), stateCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -92,6 +91,7 @@ public class CameraDetectionPreview extends Activity {
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
+                image.close();
                 Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
                 final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 runOnUiThread(new Runnable() {
@@ -100,9 +100,13 @@ public class CameraDetectionPreview extends Activity {
                         Matrix matrix = new Matrix();
                         matrix.postRotate(90);
                         Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                        BitmapDrawable bd = ((BitmapDrawable)imageView.getDrawable());
+                        if (bd != null) {
+                            bd.getBitmap().recycle();
+                        }
                         imageView.setImageBitmap(newBitmap);
+                        bitmap.recycle();
                         Log.i("AFTER DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
-                        image.close();
                     }
                 });
             }
@@ -145,7 +149,7 @@ public class CameraDetectionPreview extends Activity {
                 height = 480;
             }
 
-            ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 2);
+            reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 20);
 
             reader.setOnImageAvailableListener(readerListener, backgroundHandler);
 
@@ -209,6 +213,7 @@ public class CameraDetectionPreview extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        mCameraDevice.close();
         stopBackgroundThread();
     }
 
