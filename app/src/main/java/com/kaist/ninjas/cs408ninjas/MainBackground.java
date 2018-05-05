@@ -28,12 +28,19 @@ import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
 import android.widget.Toast;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -110,12 +117,17 @@ public class MainBackground extends Service {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
+
+//                 String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+//                 String outputDir = getCacheDir().getAbsolutePath();
+//                 FrameProcessor.test(inputDir,outputDir);
+
                 final Image image;
                 image = reader.acquireLatestImage();
 //                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 //                byte[] bytes = new byte[buffer.capacity()];
 //                buffer.get(bytes);
-                image.close();
+               image.close();
 //                Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 //                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 //                runOnUiThread(new Runnable() {
@@ -285,5 +297,37 @@ public class MainBackground extends Service {
             e.printStackTrace();
         }
         return null;
+    }
+
+
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+//                    String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+//                    String outputDir = getCacheDir().getAbsolutePath();
+//                    intervalTask.doOnce(inputDir,outputDir);
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        if (!OpenCVLoader.initDebug()) {
+            Log.d("OpenCV", "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
+        } else {
+            Log.d("OpenCV", "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 }
