@@ -118,16 +118,16 @@ public class MainBackground extends Service {
             public void onImageAvailable(ImageReader reader) {
                 Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 
-                String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
-                String outputDir = getCacheDir().getAbsolutePath();
-                FrameProcessor.test(inputDir,outputDir);
+//                 String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+//                 String outputDir = getCacheDir().getAbsolutePath();
+//                 FrameProcessor.test(inputDir,outputDir);
 
                 final Image image;
                 image = reader.acquireLatestImage();
 //                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 //                byte[] bytes = new byte[buffer.capacity()];
 //                buffer.get(bytes);
-//                image.close();
+               image.close();
 //                Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 //                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 //                runOnUiThread(new Runnable() {
