@@ -127,7 +127,7 @@ public class MainBackground extends Service {
 //                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 //                byte[] bytes = new byte[buffer.capacity()];
 //                buffer.get(bytes);
-               image.close();
+//               image.close();
 //                Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 //                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 //                runOnUiThread(new Runnable() {
