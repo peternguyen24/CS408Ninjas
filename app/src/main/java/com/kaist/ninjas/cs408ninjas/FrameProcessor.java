@@ -46,9 +46,19 @@ public class FrameProcessor {
     }
 
     public static void resize(Mat src, Mat dst){
+//        float ratio = src.width()/src.height();
+//        Size size = new Size(400, 400/ratio);
+//        Imgproc.resize(src, dst, size);
+        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_BGR2GRAY);
+    }
+
+    public static Mat resize(Mat src){
+        Mat dst = new Mat();
         float ratio = src.width()/src.height();
         Size size = new Size(400, 400/ratio);
         Imgproc.resize(src, dst, size);
+        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_BGR2GRAY);
+        return dst;
     }
 
     public static void flip(Mat src, Mat dst){
@@ -85,8 +95,9 @@ public class FrameProcessor {
         return hull;
     }
 
-    public static Mat imgBytesToMat(byte[] imgData, Mat dst, int width, int height) {
+    public static Mat imgBytesToMat(byte[] imgData, int width, int height) {
 //        Mat mat = new Mat(width, height, CvType.CV_8UC3);
+        Mat dst = new Mat();
         dst.put(0, 0, imgData);
         return dst;
     }

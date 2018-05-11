@@ -34,6 +34,13 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.function.LongToIntFunction;
 
 public class CameraDetectionPreview extends Activity {
 
@@ -91,9 +99,31 @@ public class CameraDetectionPreview extends Activity {
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
-                image.close();
                 Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
-                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+//                Mat orig = Imgcodecs.imdecode(new MatOfByte(bytes), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
+//
+//                Mat dst = FrameProcessor.resize(orig);
+//
+//                byte[] dstBytes = new byte[Math.toIntExact(dst.total()*dst.channels())];
+//                dst.get(0, 0, dstBytes);
+//
+//                Log.i("BEFORE DRAWING", bytes.length + " " + dst.width() + " " + dstBytes.length);
+
+                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888, true);
+
+                Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
+                Utils.bitmapToMat(bmp32, tmp);
+
+//                FrameProcessor.resize(tmp, tmp);
+                tmp = FrameProcessor.resize(tmp);
+//                Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2GRAY);
+                Utils.matToBitmap(tmp, bmp);
+
+                image.close();
+//                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                final Bitmap bitmap = bmp;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
