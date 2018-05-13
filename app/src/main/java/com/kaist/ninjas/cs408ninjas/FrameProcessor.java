@@ -1,23 +1,23 @@
 package com.kaist.ninjas.cs408ninjas;
 
-import android.content.Context;
-import android.media.Image;
 import android.util.Log;
+import android.util.Pair;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
 
 public class FrameProcessor {
 
@@ -65,6 +65,12 @@ public class FrameProcessor {
         flip(src, dst);
     }
 
+    public static MatOfInt getHull(MatOfPoint contour){
+        MatOfInt hull = new MatOfInt();
+        Imgproc.convexHull(contour, hull);
+        return hull;
+    }
+
     public static MatOfPoint getMaxContour(Mat src){
         Mat dst = new Mat(src.size(), CvType.CV_8UC3);
         Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGR2GRAY);
@@ -89,16 +95,78 @@ public class FrameProcessor {
         return contours.get(maxIndex);
     }
 
-    public static MatOfInt getHull(MatOfPoint contour){
+    public MatOfInt4 getDefects(MatOfPoint contour){
         MatOfInt hull = new MatOfInt();
+        MatOfInt4 defect = new MatOfInt4();
         Imgproc.convexHull(contour, hull);
-        return hull;
+        if (hull != null /*and len(hull > 3) and len(contour) > 3*/){
+             Imgproc.convexityDefects(contour, hull, defect);
+             return defect;
+        }
+        return null;
     }
 
-    public static Mat imgBytesToMat(byte[] imgData, int width, int height) {
-//        Mat mat = new Mat(width, height, CvType.CV_8UC3);
-        Mat dst = new Mat();
-        dst.put(0, 0, imgData);
-        return dst;
+    public Pair getCentroid(MatOfPoint contour){
+        Moments moments =Imgproc.moments(contour);
+        if(moments.m00 != 0){
+            int cx = (int) (moments.m10/moments.m00);
+            int cy = (int) (moments.m01/moments.m00);
+            return new Pair(cx, cy);
+        }
+        return null;
     }
+
+    public void getContourInterior(Mat src, MatOfPoint contour){
+        RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
+        Mat box = new Mat();
+        Imgproc.boxPoints(rect, box);
+        int rows = src.width();
+        int cols = src.height();
+
+    }
+//    def contour_interior(frame, contour):
+//    rect = cv2.minAreaRect(contour)
+//    box = cv2.cv.BoxPoints(rect)
+//    box = np.int0(box)
+//
+//    rows,cols,_ = frame.shape
+//            mask = np.zeros((rows,cols), dtype=np.float)
+//            for i in xrange(rows):
+//            for j in xrange(cols):
+//            mask.itemset((i,j), cv2.pointPolygonTest(box, (j,i), False))
+//
+//    mask = np.int0(mask)
+//    mask[mask < 0] = 0
+//    mask[mask > 0] = 255
+//    mask = np.array(mask, dtype=frame.dtype)
+//    mask = cv2.merge((mask, mask, mask))
+//
+//    contour_interior = cv2.bitwise_and(frame, mask)
+//            return contour_interior
+//
+
+//    def gray_threshold(frame, threshold_value):
+//    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+//    ret, thresh = cv2.threshold(gray, threshold_value, 255, 0)
+//            return thresh
+//
+//    def farthest_point(defects, contour, centroid):
+//    s = defects[:,0][:,0]
+//    cx, cy = centroid
+//
+//            x = np.array(contour[s][:,0][:,0], dtype=np.float)
+//    y = np.array(contour[s][:,0][:,1], dtype=np.float)
+//
+//    xp = cv2.pow(cv2.subtract(x, cx), 2)
+//    yp = cv2.pow(cv2.subtract(y, cy), 2)
+//    dist = cv2.sqrt(cv2.add(xp, yp))
+//
+//    dist_max_i = np.argmax(dist)
+//
+//            if dist_max_i < len(s):
+//    farthest_defect = s[dist_max_i]
+//    farthest_point = tuple(contour[farthest_defect][0])
+//		return farthest_point
+//	else:
+//            return None
 }
