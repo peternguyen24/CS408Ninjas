@@ -3,8 +3,10 @@ package com.kaist.ninjas.cs408ninjas;
 import android.util.Log;
 import android.util.Pair;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
@@ -17,6 +19,7 @@ import org.opencv.imgproc.Moments;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FrameProcessor {
@@ -45,21 +48,10 @@ public class FrameProcessor {
         Imgcodecs.imwrite(cannyFilename, im_canny);
     }
 
-    public static void resize(Mat src, Mat dst){
-//        float ratio = src.width()/src.height();
-//        Size size = new Size(400, 400/ratio);
-//        Imgproc.resize(src, dst, size);
+    public static void convertColor(Mat src, Mat dst){
         Imgproc.cvtColor(dst, dst, Imgproc.COLOR_BGR2GRAY);
     }
 
-    public static Mat resize(Mat src){
-        Mat dst = new Mat();
-        float ratio = src.width()/src.height();
-        Size size = new Size(400, 400/ratio);
-        Imgproc.resize(src, dst, size);
-        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_BGR2GRAY);
-        return dst;
-    }
 
     public static void flip(Mat src, Mat dst){
         flip(src, dst);
@@ -107,7 +99,7 @@ public class FrameProcessor {
     }
 
     public Pair getCentroid(MatOfPoint contour){
-        Moments moments =Imgproc.moments(contour);
+        Moments moments = Imgproc.moments(contour);
         if(moments.m00 != 0){
             int cx = (int) (moments.m10/moments.m00);
             int cy = (int) (moments.m01/moments.m00);
@@ -124,6 +116,21 @@ public class FrameProcessor {
         int cols = src.height();
 
     }
+
+    public void applyHistMask(Mat src, Mat hist){
+        Mat dst = new Mat();
+        Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGR2HSV);
+        Imgproc.calcBackProject(Arrays.asList(dst), new MatOfInt(0,1), hist, dst, new MatOfFloat(0,180,0,256),1);
+
+        Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(11,11));
+        Imgproc.filter2D(dst, dst, -1, disc);
+
+        Imgproc.threshold(dst, dst, 100, 255, 0);
+        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_GRAY2BGR);
+        Core.bitwise_and(src, dst, dst);
+
+    }
+
 //    def contour_interior(frame, contour):
 //    rect = cv2.minAreaRect(contour)
 //    box = cv2.cv.BoxPoints(rect)

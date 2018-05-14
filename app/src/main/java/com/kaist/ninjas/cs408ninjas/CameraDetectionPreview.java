@@ -34,10 +34,13 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
+
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -116,9 +119,14 @@ public class CameraDetectionPreview extends Activity {
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
 
-//                FrameProcessor.resize(tmp, tmp);
-                tmp = FrameProcessor.resize(tmp);
-//                Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2GRAY);
+                FrameProcessor.convertColor(tmp, tmp);
+                try {
+
+                    HandDetector.drawPalmCentroid(tmp);
+                } catch (Exception ex){
+                    ex.printStackTrace();
+                }
+
                 Utils.matToBitmap(tmp, bmp);
 
                 image.close();
