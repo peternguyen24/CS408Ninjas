@@ -30,6 +30,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -59,6 +60,14 @@ import java.util.List;
 import java.util.function.LongToIntFunction;
 
 public class CameraDetectionPreview extends Activity {
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray(4);
+
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
 
     private CameraDevice mCameraDevice;
     private Button captureButton;
@@ -170,12 +179,7 @@ public class CameraDetectionPreview extends Activity {
                         Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
                         // Draw custom area for recording histogram
-                        Paint paint = new Paint();
-                        paint.setAntiAlias(true);
-                        paint.setColor(Color.BLUE);
-                        Canvas canvas = new Canvas(newBitmap);
-                        canvas.drawCircle(60, 50, 25, paint);
-
+                        FrameProcessor.drawHistRects(newBitmap);
 
                         BitmapDrawable bd = ((BitmapDrawable)imageView.getDrawable());
                         if (bd != null) {
@@ -237,6 +241,17 @@ public class CameraDetectionPreview extends Activity {
                     stopBackgroundThread();
 
                     // Get the image for histogram here.
+                    BitmapDrawable bd = ((BitmapDrawable)imageView.getDrawable());
+                    Bitmap btm = null;
+                    if (bd != null) {
+                        btm = bd.getBitmap();
+                    }
+                    if (btm != null) {
+                        Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
+                        Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
+                        Utils.bitmapToMat(bmp32, tmp);
+                        handHist = FrameProcessor.getHandHist(tmp);
+                    }
 
                     isGettingHist = false;
                 } else {
@@ -264,9 +279,11 @@ public class CameraDetectionPreview extends Activity {
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraDevice.getId());
+            int sensorOrientation = 0;
             Size[] jpegSizes = null;
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
+                sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             }
             int width = 640;
             int height = 480;
@@ -285,24 +302,27 @@ public class CameraDetectionPreview extends Activity {
 
 
             final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.set(CaptureRequest.EDGE_MODE,
-                    CaptureRequest.EDGE_MODE_OFF);
-            captureBuilder.set(
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON);
-            captureBuilder.set(
-                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE,
-                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_OFF);
-            captureBuilder.set(CaptureRequest.NOISE_REDUCTION_MODE,
-                    CaptureRequest.NOISE_REDUCTION_MODE_OFF);
-            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(20, 20));
-
-            captureBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
-            captureBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+//            captureBuilder.set(CaptureRequest.EDGE_MODE,
+//                    CaptureRequest.EDGE_MODE_OFF);
+//            captureBuilder.set(
+//                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+//                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON);
+//            captureBuilder.set(
+//                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE,
+//                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_OFF);
+//            captureBuilder.set(CaptureRequest.NOISE_REDUCTION_MODE,
+//                    CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+//            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+//                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+//            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(20, 20));
+//
+//            captureBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
+//            captureBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+            int orientation = (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
             captureBuilder.addTarget(reader.getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+//            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
 
             mCameraDevice.createCaptureSession(Arrays.asList(reader.getSurface()), new CameraCaptureSession.StateCallback() {

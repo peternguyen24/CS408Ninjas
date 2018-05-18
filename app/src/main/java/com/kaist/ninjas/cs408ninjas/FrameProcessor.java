@@ -1,5 +1,9 @@
 package com.kaist.ninjas.cs408ninjas;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 import android.util.Pair;
 
@@ -121,13 +125,13 @@ public class FrameProcessor {
 
     public static Mat getHandHist (Mat frame){
         Size size = frame.size();
-        Mat handHistImage = new Mat(30, 30, frame.channels());
+        Mat handHistImage = new Mat(60, 60, frame.channels());
 
         for(int i = 0; i<9; i++){
-            int x = (9+(i%3))*(int) size.width/20;
+            int x = (7+3*(i%3))*(int) size.width/20;
             int y = (6+4*(i/3))*(int) size.height/20;
-            Rect roi = new Rect(x, y, 10, 10);
-            Rect dstRange = new Rect((i%3)*10,(i/3)*10, 10, 10);
+            Rect roi = new Rect(x, y, 20, 20);
+            Rect dstRange = new Rect((i%3)*20,(i/3)*20, 20, 20);
             frame.submat(roi).copyTo(handHistImage.submat(dstRange));
         }
 
@@ -137,6 +141,20 @@ public class FrameProcessor {
         Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
 
         return hist;
+    }
+
+    public static void drawHistRects(Bitmap bitmap) {
+        for(int i = 0; i<9; i++){
+            int x = (7+3*(i%3))*(int) bitmap.getWidth()/20;
+            int y = (6+4*(i/3))*(int) bitmap.getHeight()/20;
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(3);
+            paint.setAntiAlias(true);
+            paint.setColor(Color.GREEN);
+            Canvas canvas = new Canvas(bitmap);
+            canvas.drawRect(x, y, x + 20, y +20, paint);
+        }
     }
 
 }
