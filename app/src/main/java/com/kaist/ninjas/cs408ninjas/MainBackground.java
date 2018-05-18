@@ -122,12 +122,12 @@ public class MainBackground extends Service {
 //                 String outputDir = getCacheDir().getAbsolutePath();
 //                 FrameProcessor.test(inputDir,outputDir);
 
-                final Image image;
-                image = reader.acquireLatestImage();
+//                final Image image;
+//                image = reader.acquireLatestImage();
 //                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 //                byte[] bytes = new byte[buffer.capacity()];
 //                buffer.get(bytes);
-               image.close();
+//               image.close();
 //                Log.i("BEFORE DRAWING", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
 //                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 //                runOnUiThread(new Runnable() {
