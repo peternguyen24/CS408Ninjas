@@ -124,7 +124,7 @@ public class CameraDetectionPreview extends Activity {
                 // Receive hist from another activity
                 try {
 
-//                    HandDetector.drawPalmCentroid(tmp, handHist);
+//                    HandDetector.drawPalmCentroid(tmp);
                 } catch (Exception ex){
                     ex.printStackTrace();
                 }
@@ -310,5 +310,44 @@ public class CameraDetectionPreview extends Activity {
 
         }
     };
+
+    private Point[] palmBuffer;
+    int fps;
+    int currentIndex;
+    int maxIndex;
+
+    public void saveToBuffer(Point centroid){
+        palmBuffer[currentIndex] = centroid;
+        currentIndex = (currentIndex + 1) % maxIndex;
+    }
+
+    public boolean isSlideRight(){
+        boolean detected = false;
+        double current_x = palmBuffer[currentIndex].x;
+        double current_y = palmBuffer[currentIndex].y;
+
+        for(int i = 0; i<palmBuffer.length; i++){
+            int index = (currentIndex-i) % maxIndex;
+            int prev = (index-1+maxIndex) % maxIndex;
+            double x = palmBuffer[index].x;
+            double y = palmBuffer[index].y;
+            double x_prev = palmBuffer[prev].x;
+            double y_prev = palmBuffer[prev].y;
+
+            if (y < current_y - 100 || y > current_y + 100){
+                return false;
+            }
+            if (x <= x_prev + 50){
+                return false;
+            }
+            else{
+                detected = true;
+            }
+
+        }
+
+        // reset palm buffer
+        return detected;
+    }
 
 }

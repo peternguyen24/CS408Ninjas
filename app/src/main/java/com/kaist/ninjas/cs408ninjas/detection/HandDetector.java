@@ -23,35 +23,42 @@ import java.util.Arrays;
 public class HandDetector {
 
 
-    public void applyHistMask(Mat src, Mat hist){
-        Mat dst = new Mat();
-        Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGR2HSV);
-        Imgproc.calcBackProject(Arrays.asList(dst), new MatOfInt(0,1), hist, dst, new MatOfFloat(0,180,0,256),1);
+    public static void applyHistMask(Mat src, Mat hist){
+        Mat mask = new Mat();
+        Imgproc.cvtColor(src, mask, Imgproc.COLOR_BGR2HSV);
+        Imgproc.calcBackProject(Arrays.asList(mask), new MatOfInt(0,1), hist, mask, new MatOfFloat(0,180,0,256),1);
 
         Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(11,11));
-        Imgproc.filter2D(dst, dst, -1, disc);
+        Imgproc.filter2D(mask, mask, -1, disc);
 
-        Imgproc.threshold(dst, dst, 100, 255, 0);
-        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_GRAY2BGR);
-        Core.bitwise_and(src, dst, dst);
-
+        Imgproc.threshold(mask, mask, 100, 255, 0);
+        Imgproc.cvtColor(mask, mask, Imgproc.COLOR_GRAY2BGR);
+        Core.bitwise_and(src, mask, src);
     }
 
-    public MatOfPoint getHandContour(Mat frame){
+    public static MatOfPoint getHandContour(Mat frame, Mat handHist){
         Mat dst  = new Mat(frame.size(), frame.channels());
+        applyHistMask(frame, handHist);
         MatOfPoint contour = FrameProcessor.getMaxContour(frame);
-        Imgproc.drawContours(dst, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
+//        Imgproc.drawContours(dst, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
+//
+//        Mat kernel = new Mat(5, 5, CvType.CV_32F);
+//        Imgproc.dilate(dst, dst, kernel);
+//        Imgproc.erode(dst, dst, kernel);
+//
+//        contour = FrameProcessor.getMaxContour(dst);
+        Imgproc.drawContours(frame, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
 
         Mat kernel = new Mat(5, 5, CvType.CV_32F);
-        Imgproc.dilate(dst, dst, kernel);
-        Imgproc.erode(dst, dst, kernel);
+        Imgproc.dilate(frame, frame, kernel);
+        Imgproc.erode(frame, frame, kernel);
 
-        contour = FrameProcessor.getMaxContour(dst);
+        contour = FrameProcessor.getMaxContour(frame);
         return contour;
     }
 
-    public Pair<Point, Double> findPalm(Mat frame){
-        MatOfPoint handContour = getHandContour(frame);
+    public static Pair<Point, Double> findPalm(Mat frame, Mat handHist){
+        MatOfPoint handContour = getHandContour(frame, handHist);
         Rect rect = Imgproc.boundingRect(handContour);
         int max_d = 0;
         Point center = null;
@@ -81,8 +88,10 @@ public class HandDetector {
         return new Pair(center, max_d);
     }
 
-    public void drawPalmCentroid(Mat frame){
-        Pair<Point, Double> palm = findPalm(frame);
+    public static void drawPalmCentroid(Mat frame, Mat handHist){
+        Mat frameCpy = new Mat();
+        frame.copyTo(frameCpy);
+        Pair<Point, Double> palm = findPalm(frameCpy, handHist);
         Point palmCenter = palm.first;
         double palmRad = palm.second;
         Imgproc.circle(frame, palmCenter, (int) palmRad, new Scalar(255,0,0), 2);
