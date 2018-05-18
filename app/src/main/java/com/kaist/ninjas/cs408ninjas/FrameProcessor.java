@@ -11,6 +11,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -117,63 +118,25 @@ public class FrameProcessor {
 
     }
 
-    public void applyHistMask(Mat src, Mat hist){
-        Mat dst = new Mat();
-        Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGR2HSV);
-        Imgproc.calcBackProject(Arrays.asList(dst), new MatOfInt(0,1), hist, dst, new MatOfFloat(0,180,0,256),1);
 
-        Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(11,11));
-        Imgproc.filter2D(dst, dst, -1, disc);
+    public static Mat getHandHist (Mat frame){
+        Size size = frame.size();
+        Mat handHistImage = new Mat(30, 30, frame.channels());
 
-        Imgproc.threshold(dst, dst, 100, 255, 0);
-        Imgproc.cvtColor(dst, dst, Imgproc.COLOR_GRAY2BGR);
-        Core.bitwise_and(src, dst, dst);
+        for(int i = 0; i<9; i++){
+            int x = (9+(i%3))*(int) size.width/20;
+            int y = (6+4*(i/3))*(int) size.height/20;
+            Rect roi = new Rect(x, y, 10, 10);
+            Rect dstRange = new Rect((i%3)*10,(i/3)*10, 10, 10);
+            frame.submat(roi).copyTo(handHistImage.submat(dstRange));
+        }
 
+        Mat hist = new Mat();
+        Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
+        Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),null, hist, new MatOfInt(180,256), new MatOfFloat(0, 180, 0, 256)  );
+        Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
+
+        return hist;
     }
 
-//    def contour_interior(frame, contour):
-//    rect = cv2.minAreaRect(contour)
-//    box = cv2.cv.BoxPoints(rect)
-//    box = np.int0(box)
-//
-//    rows,cols,_ = frame.shape
-//            mask = np.zeros((rows,cols), dtype=np.float)
-//            for i in xrange(rows):
-//            for j in xrange(cols):
-//            mask.itemset((i,j), cv2.pointPolygonTest(box, (j,i), False))
-//
-//    mask = np.int0(mask)
-//    mask[mask < 0] = 0
-//    mask[mask > 0] = 255
-//    mask = np.array(mask, dtype=frame.dtype)
-//    mask = cv2.merge((mask, mask, mask))
-//
-//    contour_interior = cv2.bitwise_and(frame, mask)
-//            return contour_interior
-//
-
-//    def gray_threshold(frame, threshold_value):
-//    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-//    ret, thresh = cv2.threshold(gray, threshold_value, 255, 0)
-//            return thresh
-//
-//    def farthest_point(defects, contour, centroid):
-//    s = defects[:,0][:,0]
-//    cx, cy = centroid
-//
-//            x = np.array(contour[s][:,0][:,0], dtype=np.float)
-//    y = np.array(contour[s][:,0][:,1], dtype=np.float)
-//
-//    xp = cv2.pow(cv2.subtract(x, cx), 2)
-//    yp = cv2.pow(cv2.subtract(y, cy), 2)
-//    dist = cv2.sqrt(cv2.add(xp, yp))
-//
-//    dist_max_i = np.argmax(dist)
-//
-//            if dist_max_i < len(s):
-//    farthest_defect = s[dist_max_i]
-//    farthest_point = tuple(contour[farthest_defect][0])
-//		return farthest_point
-//	else:
-//            return None
 }

@@ -66,6 +66,7 @@ public class CameraDetectionPreview extends Activity {
     private CaptureRequest.Builder captureRequestBuilder;
     private ImageReader.OnImageAvailableListener readerListener;
     private ImageReader reader;
+    private Mat handHist;
 
     private static final String[] CAMERA_PERMISSIONS = {
             Manifest.permission.CAMERA
@@ -119,10 +120,11 @@ public class CameraDetectionPreview extends Activity {
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
 
-                FrameProcessor.convertColor(tmp, tmp);
+//                FrameProcessor.convertColor(tmp, tmp);
+                // Receive hist from another activity
                 try {
 
-                    HandDetector.drawPalmCentroid(tmp);
+//                    HandDetector.drawPalmCentroid(tmp, handHist);
                 } catch (Exception ex){
                     ex.printStackTrace();
                 }
@@ -130,7 +132,6 @@ public class CameraDetectionPreview extends Activity {
                 Utils.matToBitmap(tmp, bmp);
 
                 image.close();
-//                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 final Bitmap bitmap = bmp;
                 runOnUiThread(new Runnable() {
                     @Override
