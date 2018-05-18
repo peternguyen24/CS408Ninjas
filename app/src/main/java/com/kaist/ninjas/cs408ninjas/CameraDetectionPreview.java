@@ -6,8 +6,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -59,14 +62,20 @@ public class CameraDetectionPreview extends Activity {
 
     private CameraDevice mCameraDevice;
     private Button captureButton;
+    private Button previewHistButton;
+
     private ImageView imageView;
     private CameraCaptureSession mCameraCaptureSession;
     private HandlerThread backgroundThread;
     private Handler backgroundHandler;
     private CaptureRequest.Builder captureRequestBuilder;
     private ImageReader.OnImageAvailableListener readerListener;
+    private ImageReader.OnImageAvailableListener histPreviewReaderListener;
     private ImageReader reader;
     private Mat handHist;
+    private boolean isDetecting;
+    private boolean isGettingHist;
+
 
     private static final String[] CAMERA_PERMISSIONS = {
             Manifest.permission.CAMERA
@@ -80,21 +89,10 @@ public class CameraDetectionPreview extends Activity {
         setContentView(R.layout.activity_camera_detection_preview);
 
         captureButton = findViewById(R.id.capture_button);
+        previewHistButton = findViewById(R.id.preview_hist_button);
         imageView = findViewById(R.id.image_view);
 
-
-
-        CameraManager myCameraManage = (CameraManager) getSystemService(CAMERA_SERVICE);
-        try {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, CAMERA_PERMISSIONS, 1);
-            }
-
-            myCameraManage.openCamera(getCamera(myCameraManage), stateCallback, null);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-
+        // for CAPTURE - detection
         readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
@@ -151,6 +149,46 @@ public class CameraDetectionPreview extends Activity {
             }
         };
 
+        // for preview to get HISTOGRAM
+        histPreviewReaderListener = new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                final Image image;
+                image = reader.acquireLatestImage();
+                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                byte[] bytes = new byte[buffer.capacity()];
+                buffer.get(bytes);
+                Log.i("PREVIEW HIST FRAME", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
+                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                image.close();
+                final Bitmap bitmap = bmp;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(90);
+                        Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+                        // Draw custom area for recording histogram
+                        Paint paint = new Paint();
+                        paint.setAntiAlias(true);
+                        paint.setColor(Color.BLUE);
+                        Canvas canvas = new Canvas(newBitmap);
+                        canvas.drawCircle(60, 50, 25, paint);
+
+
+                        BitmapDrawable bd = ((BitmapDrawable)imageView.getDrawable());
+                        if (bd != null) {
+                            bd.getBitmap().recycle();
+                        }
+                        imageView.setImageBitmap(newBitmap);
+                        bitmap.recycle();
+                        Log.i("AFTER HIST FRAME", ""+ new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime()));
+                    }
+                });
+            }
+        };
+
         captureListener = new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
@@ -165,7 +203,56 @@ public class CameraDetectionPreview extends Activity {
         captureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               CameraDetectionPreview.this.captureCamera();
+                if (isGettingHist) {
+                    return;
+                }
+                if (isDetecting) {
+                    mCameraDevice.close();
+                    stopBackgroundThread();
+                    isDetecting = false;
+                } else {
+                    isDetecting = true;
+                    startBackgroundThread();
+                    CameraManager myCameraManage = (CameraManager) getSystemService(CAMERA_SERVICE);
+                    try {
+                        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(CameraDetectionPreview.this, CAMERA_PERMISSIONS, 1);
+                        }
+
+                        myCameraManage.openCamera(getCamera(myCameraManage), stateCallback, null);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        previewHistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isDetecting) {
+                    return;
+                }
+                if (isGettingHist) {
+                    mCameraDevice.close();
+                    stopBackgroundThread();
+
+                    // Get the image for histogram here.
+
+                    isGettingHist = false;
+                } else {
+                    isGettingHist = true;
+                    startBackgroundThread();
+                    CameraManager myCameraManage = (CameraManager) getSystemService(CAMERA_SERVICE);
+                    try {
+                        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(CameraDetectionPreview.this, CAMERA_PERMISSIONS, 1);
+                        }
+
+                        myCameraManage.openCamera(getCamera(myCameraManage), stateCallback, null);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
 
@@ -190,7 +277,11 @@ public class CameraDetectionPreview extends Activity {
 
             reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 20);
 
-            reader.setOnImageAvailableListener(readerListener, backgroundHandler);
+            if (isDetecting) {
+                reader.setOnImageAvailableListener(readerListener, backgroundHandler);
+            } else if (isGettingHist) {
+                reader.setOnImageAvailableListener(histPreviewReaderListener, backgroundHandler);
+            }
 
 
             final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -246,14 +337,11 @@ public class CameraDetectionPreview extends Activity {
     protected void onResume() {
         super.onResume();
         Log.e("RESUME", "onResume");
-        startBackgroundThread();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mCameraDevice.close();
-        stopBackgroundThread();
     }
 
     private void stopBackgroundThread() {
@@ -298,6 +386,7 @@ public class CameraDetectionPreview extends Activity {
         @Override
         public void onOpened(CameraDevice camera) {
             CameraDetectionPreview.this.mCameraDevice = camera;
+            CameraDetectionPreview.this.captureCamera();
         }
 
         @Override
