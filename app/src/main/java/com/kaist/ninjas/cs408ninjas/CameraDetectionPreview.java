@@ -118,8 +118,7 @@ public class CameraDetectionPreview extends Activity {
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
 
-//                FrameProcessor.convertColor(tmp, tmp);
-                // Receive hist from another activity
+                FrameProcessor.convertColor(tmp, tmp);
                 try {
 
 //                    HandDetector.drawPalmCentroid(tmp);
