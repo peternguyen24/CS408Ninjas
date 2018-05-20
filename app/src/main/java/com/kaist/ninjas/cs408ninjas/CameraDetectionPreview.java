@@ -81,7 +81,7 @@ public class CameraDetectionPreview extends Activity {
     private ImageReader.OnImageAvailableListener readerListener;
     private ImageReader.OnImageAvailableListener histPreviewReaderListener;
     private ImageReader reader;
-    private Mat handHist;
+    private Mat handHist = null;
     private boolean isDetecting;
     private boolean isGettingHist;
 
@@ -127,11 +127,18 @@ public class CameraDetectionPreview extends Activity {
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
 
-                FrameProcessor.convertColor(tmp, tmp);
-                try {
+//                FrameProcessor.convertColor(tmp, tmp);
 
-//                    HandDetector.drawPalmCentroid(tmp);
+                try {
+                    Log.i("CAPTURE", "Try getting hand histogram");
+                    if (handHist != null){
+
+                        Log.i("CAPTURE", "Got histogram");
+                        HandDetector.drawPalmCentroid(tmp, handHist);
+                    }
+                    Log.i("CAPTURE", "got histogram?");
                 } catch (Exception ex){
+                    Log.i("CAPTURE", "error getting historgram: ");
                     ex.printStackTrace();
                 }
 
@@ -246,10 +253,17 @@ public class CameraDetectionPreview extends Activity {
                         btm = bd.getBitmap();
                     }
                     if (btm != null) {
-                        Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
-                        Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
-                        Utils.bitmapToMat(bmp32, tmp);
-                        handHist = FrameProcessor.getHandHist(tmp);
+                        try {
+                            Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
+                            Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
+                            Utils.bitmapToMat(bmp32, tmp);
+                            handHist = FrameProcessor.getHandHist(tmp);
+
+                        } catch (Exception ex){
+                            Log.i("GETTING HISTOGRAM", ex.toString());
+
+                            ex.printStackTrace();
+                        }
                     }
 
                     isGettingHist = false;

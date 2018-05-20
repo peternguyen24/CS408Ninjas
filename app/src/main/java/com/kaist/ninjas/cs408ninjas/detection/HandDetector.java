@@ -19,6 +19,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class HandDetector {
 
@@ -32,8 +33,10 @@ public class HandDetector {
         Imgproc.filter2D(mask, mask, -1, disc);
 
         Imgproc.threshold(mask, mask, 100, 255, 0);
-        Imgproc.cvtColor(mask, mask, Imgproc.COLOR_GRAY2BGR);
-        Core.bitwise_and(src, mask, src);
+//        Imgproc.cvtColor(mask, mask, Imgproc.COLOR_GRAY2BGR);
+//        Core.bitwise_and(src, mask, src);
+
+        src.copyTo(src, mask);
     }
 
     public static MatOfPoint getHandContour(Mat frame, Mat handHist){
@@ -50,6 +53,7 @@ public class HandDetector {
         Imgproc.drawContours(frame, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
 
         Mat kernel = new Mat(5, 5, CvType.CV_32F);
+        // Bug from here
         Imgproc.dilate(frame, frame, kernel);
         Imgproc.erode(frame, frame, kernel);
 

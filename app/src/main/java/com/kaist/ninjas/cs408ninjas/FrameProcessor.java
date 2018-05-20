@@ -125,7 +125,7 @@ public class FrameProcessor {
 
     public static Mat getHandHist (Mat frame){
         Size size = frame.size();
-        Mat handHistImage = new Mat(60, 60, frame.channels());
+        Mat handHistImage = new Mat(60, 60, frame.type());
 
         for(int i = 0; i<9; i++){
             int x = (7+3*(i%3))*(int) size.width/20;
@@ -135,12 +135,28 @@ public class FrameProcessor {
             frame.submat(roi).copyTo(handHistImage.submat(dstRange));
         }
 
-        Mat hist = new Mat();
-        Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
-        Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),null, hist, new MatOfInt(180,256), new MatOfFloat(0, 180, 0, 256)  );
-        Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
+        try{
+            Mat hist = new Mat();
+            Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
+            Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),new Mat(), hist, new MatOfInt(180,256), new MatOfFloat(0, 180, 0, 256)  );
+            Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
+            return hist;
+        } catch (Exception ex){
+            ex.printStackTrace();
 
-        return hist;
+        }
+
+
+//        List<Mat> images = new ArrayList<Mat>();
+//        Core.split(mask, images);
+//        MatOfInt channels = new MatOfInt(0);
+//        MatOfFloat histRange = new MatOfFloat(0,256);
+//        MatOfInt histSize = new MatOfInt(256);
+//        Imgproc.calcBackProject(images.subList(0,1), channels, new Mat(), hist, histRange, histSize, false);
+
+
+//        return hist;
+        return null;
     }
 
     public static void drawHistRects(Bitmap bitmap) {
