@@ -81,7 +81,7 @@ public class CameraDetectionPreview extends Activity {
     private ImageReader.OnImageAvailableListener readerListener;
     private ImageReader.OnImageAvailableListener histPreviewReaderListener;
     private ImageReader reader;
-    private Mat handHist;
+    private Mat handHist = null;
     private boolean isDetecting;
     private boolean isGettingHist;
 
@@ -128,11 +128,17 @@ public class CameraDetectionPreview extends Activity {
                 Utils.bitmapToMat(bmp32, tmp);
 
 //                FrameProcessor.convertColor(tmp, tmp);
-                // Receive hist from another activity
-                try {
 
-//                    HandDetector.drawPalmCentroid(tmp, handHist);
+                try {
+                    Log.i("CAPTURE", "Try getting hand histogram");
+                    if (handHist != null){
+
+                        Log.i("CAPTURE", "Got histogram");
+                        HandDetector.drawPalmCentroid(tmp, handHist);
+                    }
+                    Log.i("CAPTURE", "got histogram?");
                 } catch (Exception ex){
+                    Log.i("CAPTURE", "error getting historgram: ");
                     ex.printStackTrace();
                 }
 
@@ -247,10 +253,17 @@ public class CameraDetectionPreview extends Activity {
                         btm = bd.getBitmap();
                     }
                     if (btm != null) {
-                        Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
-                        Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
-                        Utils.bitmapToMat(bmp32, tmp);
-                        handHist = FrameProcessor.getHandHist(tmp);
+                        try {
+                            Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
+                            Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
+                            Utils.bitmapToMat(bmp32, tmp);
+                            handHist = FrameProcessor.getHandHist(tmp);
+
+                        } catch (Exception ex){
+                            Log.i("GETTING HISTOGRAM", ex.toString());
+
+                            ex.printStackTrace();
+                        }
                     }
 
                     isGettingHist = false;
@@ -419,5 +432,44 @@ public class CameraDetectionPreview extends Activity {
 
         }
     };
+
+    private Point[] palmBuffer;
+    int fps;
+    int currentIndex;
+    int maxIndex;
+
+    public void saveToBuffer(Point centroid){
+        palmBuffer[currentIndex] = centroid;
+        currentIndex = (currentIndex + 1) % maxIndex;
+    }
+
+    public boolean isSlideRight(){
+        boolean detected = false;
+        double current_x = palmBuffer[currentIndex].x;
+        double current_y = palmBuffer[currentIndex].y;
+
+        for(int i = 0; i<palmBuffer.length; i++){
+            int index = (currentIndex-i) % maxIndex;
+            int prev = (index-1+maxIndex) % maxIndex;
+            double x = palmBuffer[index].x;
+            double y = palmBuffer[index].y;
+            double x_prev = palmBuffer[prev].x;
+            double y_prev = palmBuffer[prev].y;
+
+            if (y < current_y - 100 || y > current_y + 100){
+                return false;
+            }
+            if (x <= x_prev + 50){
+                return false;
+            }
+            else{
+                detected = true;
+            }
+
+        }
+
+        // reset palm buffer
+        return detected;
+    }
 
 }
