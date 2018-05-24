@@ -38,6 +38,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.kaist.ninjas.cs408ninjas.detection.MotionDetector;
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 
 import org.opencv.android.Utils;
@@ -85,6 +86,8 @@ public class CameraDetectionPreview extends Activity {
     private boolean isDetecting;
     private boolean isGettingHist;
 
+    // gesture detection
+    private MotionDetector gestureDetector;
 
     private static final String[] CAMERA_PERMISSIONS = {
             Manifest.permission.CAMERA
@@ -107,7 +110,6 @@ public class CameraDetectionPreview extends Activity {
             public void onImageAvailable(ImageReader reader) {
                 final Image image;
                 image = reader.acquireLatestImage();
-                if (image == null) return;
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
@@ -443,43 +445,5 @@ public class CameraDetectionPreview extends Activity {
         }
     };
 
-    private Point[] palmBuffer;
-    int fps;
-    int currentIndex;
-    int maxIndex;
-
-    public void saveToBuffer(Point centroid){
-        palmBuffer[currentIndex] = centroid;
-        currentIndex = (currentIndex + 1) % maxIndex;
-    }
-
-    public boolean isSlideRight(){
-        boolean detected = false;
-        double current_x = palmBuffer[currentIndex].x;
-        double current_y = palmBuffer[currentIndex].y;
-
-        for(int i = 0; i<palmBuffer.length; i++){
-            int index = (currentIndex-i) % maxIndex;
-            int prev = (index-1+maxIndex) % maxIndex;
-            double x = palmBuffer[index].x;
-            double y = palmBuffer[index].y;
-            double x_prev = palmBuffer[prev].x;
-            double y_prev = palmBuffer[prev].y;
-
-            if (y < current_y - 100 || y > current_y + 100){
-                return false;
-            }
-            if (x <= x_prev + 50){
-                return false;
-            }
-            else{
-                detected = true;
-            }
-
-        }
-
-        // reset palm buffer
-        return detected;
-    }
-
 }
+
