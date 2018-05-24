@@ -5,12 +5,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -28,36 +24,25 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.util.Range;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
-import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.kaist.ninjas.cs408ninjas.detection.MotionDetector;
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.core.Point;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
-import java.util.function.LongToIntFunction;
 
 public class CameraDetectionPreview extends Activity {
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray(4);
@@ -136,7 +121,6 @@ public class CameraDetectionPreview extends Activity {
                         Log.i("CAPTURE", "Got histogram");
                         HandDetector.drawPalmCentroid(tmp, handHist);
                     }
-                    Log.i("CAPTURE", "got histogram?");
                 } catch (Exception ex){
                     Log.i("CAPTURE", "error getting historgram: ");
                     ex.printStackTrace();
@@ -433,43 +417,13 @@ public class CameraDetectionPreview extends Activity {
         }
     };
 
-    private Point[] palmBuffer;
-    int fps;
-    int currentIndex;
-    int maxIndex;
 
-    public void saveToBuffer(Point centroid){
-        palmBuffer[currentIndex] = centroid;
-        currentIndex = (currentIndex + 1) % maxIndex;
-    }
-
-    public boolean isSlideRight(){
-        boolean detected = false;
-        double current_x = palmBuffer[currentIndex].x;
-        double current_y = palmBuffer[currentIndex].y;
-
-        for(int i = 0; i<palmBuffer.length; i++){
-            int index = (currentIndex-i) % maxIndex;
-            int prev = (index-1+maxIndex) % maxIndex;
-            double x = palmBuffer[index].x;
-            double y = palmBuffer[index].y;
-            double x_prev = palmBuffer[prev].x;
-            double y_prev = palmBuffer[prev].y;
-
-            if (y < current_y - 100 || y > current_y + 100){
-                return false;
-            }
-            if (x <= x_prev + 50){
-                return false;
-            }
-            else{
-                detected = true;
-            }
-
-        }
-
-        // reset palm buffer
-        return detected;
-    }
+    // gesture detection
+    private MotionDetector gestureDetector;
+//    private Gesture initGesture;
+//    private Point[] posBuffer;
+//    private int maxIndex;
+//    private int currentIndex;
 
 }
+
