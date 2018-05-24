@@ -107,6 +107,7 @@ public class CameraDetectionPreview extends Activity {
             public void onImageAvailable(ImageReader reader) {
                 final Image image;
                 image = reader.acquireLatestImage();
+                if (image == null) return;
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
@@ -126,22 +127,25 @@ public class CameraDetectionPreview extends Activity {
 
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
+                bmp32.recycle();
 
-//                FrameProcessor.convertColor(tmp, tmp);
-
-                try {
-                    Log.i("CAPTURE", "Try getting hand histogram");
-                    if (handHist != null){
-
-                        Log.i("CAPTURE", "Got histogram");
-                        HandDetector.drawPalmCentroid(tmp, handHist);
-                    }
-                    Log.i("CAPTURE", "got histogram?");
-                } catch (Exception ex){
-                    Log.i("CAPTURE", "error getting historgram: ");
-                    ex.printStackTrace();
+                // This hand hist is in HSV space
+                if (handHist != null) {
+                    tmp = FrameProcessor.getHistMask(tmp, handHist);
+//                    tmp = handHist.clone();
+//                    Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
+                } else {
+                    Log.i("CAPTURE", "======================NO HAND HIST");
+                    return;
                 }
 
+                //test
+//                bmp.recycle();
+//                bmp = Bitmap.createBitmap(tmp.width(), tmp.height(), Bitmap.Config.ARGB_8888);
+                //
+
+                // Convert back to scale and display
+                Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
                 Utils.matToBitmap(tmp, bmp);
 
                 image.close();
@@ -327,13 +331,13 @@ public class CameraDetectionPreview extends Activity {
 //                    CaptureRequest.NOISE_REDUCTION_MODE_OFF);
 //            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
 //                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-//            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(20, 20));
+            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(12, 12));
 //
 //            captureBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
 //            captureBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
-            int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            int orientation = (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
+//            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+//            int orientation = (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
+//            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
             captureBuilder.addTarget(reader.getSurface());
 //            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
@@ -374,6 +378,12 @@ public class CameraDetectionPreview extends Activity {
 
     @Override
     protected void onPause() {
+        if (isDetecting || isGettingHist) {
+            mCameraDevice.close();
+            stopBackgroundThread();
+        }
+        isDetecting = false;
+        isGettingHist = false;
         super.onPause();
     }
 
