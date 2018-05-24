@@ -74,10 +74,10 @@ public class FrameProcessor {
         Imgproc.threshold(dst, dst, 0, 255, 0);
 
         // Get contours
-        Mat _ = new Mat();
+        Mat temp = new Mat();
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-        Imgproc.findContours(dst, contours, _,Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        _.release();
+        Imgproc.findContours(dst, contours, temp,Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        temp.release();
 
         int maxIndex = 0;
         double maxArea = 0;
@@ -125,6 +125,7 @@ public class FrameProcessor {
 
     public static Mat getHandHist (Mat frame){
         Size size = frame.size();
+//        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2HSV);
         Mat handHistImage = new Mat(60, 60, frame.type());
 
         for(int i = 0; i<9; i++){
@@ -132,12 +133,31 @@ public class FrameProcessor {
             int y = (6+4*(i/3))*(int) size.height/20;
             Rect roi = new Rect(x, y, 20, 20);
             Rect dstRange = new Rect((i%3)*20,(i/3)*20, 20, 20);
+//            frame.submat(roi).copyTo(handHistImage.colRange(
+//                    (i%3)*20, (i%3)*20+20).rowRange((i/3)*20,(i/3)*20 + 20));
+//            if (frame.submat(roi).type()== handHistImage.submat(dstRange).type()) {
+//                Log.i("ASSERT ===== ","OK");
+//            } else {
+//                Log.i("ASSERT ===== "," NOT OK"
+//                        +frame.submat(roi).type()+" "
+//                        +handHistImage.submat(dstRange).type() + " "
+//                        +handHistImage.type() + ' '
+//                        );
+//            }
+
             frame.submat(roi).copyTo(handHistImage.submat(dstRange));
+//            Log.i("MATRIX ", frame.submat(roi).dump());
+//            Log.i("COLOR Origin", ""+x+" "+y+ " " + frame.get(x, y).toString() );
+//            Log.i("COLOR", ""+i%3+" "+i/3+ " "
+//                    +handHistImage.get(i%3, i/3).toString() );
         }
+
+//        Log.i("MATRIX ", handHistImage.dump());
+        // Convert area to HSV
+        Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
 
         try{
             Mat hist = new Mat();
-            Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
             Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),new Mat(), hist, new MatOfInt(180,256), new MatOfFloat(0, 180, 0, 256)  );
             Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
             return hist;
@@ -165,12 +185,37 @@ public class FrameProcessor {
             int y = (6+4*(i/3))*(int) bitmap.getHeight()/20;
             Paint paint = new Paint();
             paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(3);
+            paint.setStrokeWidth(2);
             paint.setAntiAlias(true);
             paint.setColor(Color.GREEN);
             Canvas canvas = new Canvas(bitmap);
-            canvas.drawRect(x, y, x + 20, y +20, paint);
+            canvas.drawRect(x-2, y-2, x + 22, y +22, paint);
         }
+    }
+
+    public static Mat getHistMask(Mat frameMat, Mat hist) {
+        try{
+            Mat hsvFrame = new Mat(frameMat.width(), frameMat.height(), frameMat.type());
+            Mat dst = new Mat();
+            Imgproc.cvtColor(frameMat, hsvFrame, Imgproc.COLOR_BGR2HSV);
+            List<Mat> frames = new ArrayList<Mat>();
+            frames.add(hsvFrame);
+            Imgproc.calcBackProject(frames, new MatOfInt(0, 1), hist, dst, new MatOfFloat(0, 180, 0, 256), 1);
+
+            Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_OPEN, new Size(11, 11));
+            Imgproc.filter2D(dst, dst, -1, disc);
+
+            Mat dst2 = new Mat();
+            Imgproc.threshold(dst, dst, 100, 225, Imgproc.THRESH_BINARY);
+            Core.merge(Arrays.asList(dst, dst, dst), dst2);
+
+            Imgproc.GaussianBlur(dst2, dst2, new Size(3, 3), 0 );
+            Core.bitwise_and(hsvFrame, dst2, hsvFrame);
+            return hsvFrame;
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return null;
     }
 
 }

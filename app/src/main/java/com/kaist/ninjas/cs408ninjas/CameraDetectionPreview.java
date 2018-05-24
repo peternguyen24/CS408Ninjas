@@ -5,8 +5,12 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -24,9 +28,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -38,11 +44,21 @@ import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.Point;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
+import java.util.function.LongToIntFunction;
 
 public class CameraDetectionPreview extends Activity {
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray(4);
@@ -70,6 +86,8 @@ public class CameraDetectionPreview extends Activity {
     private boolean isDetecting;
     private boolean isGettingHist;
 
+    // gesture detection
+    private MotionDetector gestureDetector;
 
     private static final String[] CAMERA_PERMISSIONS = {
             Manifest.permission.CAMERA
@@ -111,21 +129,25 @@ public class CameraDetectionPreview extends Activity {
 
                 Mat tmp = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC1);
                 Utils.bitmapToMat(bmp32, tmp);
+                bmp32.recycle();
 
-//                FrameProcessor.convertColor(tmp, tmp);
-
-                try {
-                    Log.i("CAPTURE", "Try getting hand histogram");
-                    if (handHist != null){
-
-                        Log.i("CAPTURE", "Got histogram");
-                        HandDetector.drawPalmCentroid(tmp, handHist);
-                    }
-                } catch (Exception ex){
-                    Log.i("CAPTURE", "error getting historgram: ");
-                    ex.printStackTrace();
+                // This hand hist is in HSV space
+                if (handHist != null) {
+                    tmp = FrameProcessor.getHistMask(tmp, handHist);
+//                    tmp = handHist.clone();
+//                    Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
+                } else {
+                    Log.i("CAPTURE", "======================NO HAND HIST");
+                    return;
                 }
 
+                //test
+//                bmp.recycle();
+//                bmp = Bitmap.createBitmap(tmp.width(), tmp.height(), Bitmap.Config.ARGB_8888);
+                //
+
+                // Convert back to scale and display
+                Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
                 Utils.matToBitmap(tmp, bmp);
 
                 image.close();
@@ -311,13 +333,13 @@ public class CameraDetectionPreview extends Activity {
 //                    CaptureRequest.NOISE_REDUCTION_MODE_OFF);
 //            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
 //                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-//            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(20, 20));
+            captureBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(12, 12));
 //
 //            captureBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
 //            captureBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
-            int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            int orientation = (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
+//            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+//            int orientation = (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
+//            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
             captureBuilder.addTarget(reader.getSurface());
 //            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
@@ -358,6 +380,12 @@ public class CameraDetectionPreview extends Activity {
 
     @Override
     protected void onPause() {
+        if (isDetecting || isGettingHist) {
+            mCameraDevice.close();
+            stopBackgroundThread();
+        }
+        isDetecting = false;
+        isGettingHist = false;
         super.onPause();
     }
 
@@ -416,14 +444,6 @@ public class CameraDetectionPreview extends Activity {
 
         }
     };
-
-
-    // gesture detection
-    private MotionDetector gestureDetector;
-//    private Gesture initGesture;
-//    private Point[] posBuffer;
-//    private int maxIndex;
-//    private int currentIndex;
 
 }
 
