@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class HandDetector {
-
-
     public static void applyHistMask(Mat src, Mat hist){
         Mat mask = new Mat();
         Imgproc.cvtColor(src, mask, Imgproc.COLOR_BGR2HSV);
@@ -100,5 +98,22 @@ public class HandDetector {
         double palmRad = palm.second;
         Imgproc.circle(frame, palmCenter, (int) palmRad, new Scalar(255,0,0), 2);
         Imgproc.circle(frame, palmCenter, 5, new Scalar(255,0,0), -1);
+    }
+
+    // from trained model
+    public static ArrayList<Pair<Gesture, Point>> detectGesture(Mat frame){
+        // detect gesture and its location here!
+        ArrayList<Pair<Gesture,Point>> detected = new ArrayList<>();
+        Gesture detectedGes1 = Gesture.Act;
+        Gesture detectedGes2 = Gesture.V;
+        Point detectedLoc1 = new Point();
+        Point detectedLoc2 = new Point();
+        if(detectedLoc1 != null){
+            detected.add(new Pair(detectedGes1, detectedLoc1));
+        }
+        if(detectedLoc2 != null){
+            detected.add(new Pair(detectedGes2, detectedLoc2));
+        }
+        return detected;
     }
 }
