@@ -208,8 +208,6 @@ public class FrameProcessor {
             Mat dst2 = new Mat();
             Imgproc.threshold(dst, dst, 100, 225, Imgproc.THRESH_BINARY);
             Core.merge(Arrays.asList(dst, dst, dst), dst2);
-
-            Imgproc.GaussianBlur(dst2, dst2, new Size(3, 3), 0 );
             Core.bitwise_and(hsvFrame, dst2, hsvFrame);
             return hsvFrame;
         } catch (Exception ex){
