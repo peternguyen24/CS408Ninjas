@@ -1,5 +1,6 @@
 package com.kaist.ninjas.cs408ninjas.detection;
 
+import android.util.Log;
 import android.util.Pair;
 
 import com.kaist.ninjas.cs408ninjas.FrameProcessor;
@@ -22,55 +23,41 @@ import java.util.Arrays;
 import java.util.List;
 
 public class HandDetector {
-    public static void applyHistMask(Mat src, Mat hist){
-        Mat mask = new Mat();
-        Imgproc.cvtColor(src, mask, Imgproc.COLOR_BGR2HSV);
-        Imgproc.calcBackProject(Arrays.asList(mask), new MatOfInt(0,1), hist, mask, new MatOfFloat(0,180,0,256),1);
+    public static Mat applyHistMask(Mat frameMat, Mat hist){
+        try{
+            Mat hsvFrame = frameMat.clone();
+            Mat dst = new Mat();
+            List<Mat> frames = new ArrayList<Mat>();
+            frames.add(hsvFrame);
+            Imgproc.calcBackProject(frames, new MatOfInt(0, 1), hist, dst, new MatOfFloat(0, 180, 0, 256), 1);
 
-        Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(11,11));
-        Imgproc.filter2D(mask, mask, -1, disc);
+            Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_OPEN, new Size(11, 11));
+            Imgproc.filter2D(dst, dst, -1, disc);
 
-        Imgproc.threshold(mask, mask, 100, 255, 0);
-//        Imgproc.cvtColor(mask, mask, Imgproc.COLOR_GRAY2BGR);
-//        Core.bitwise_and(src, mask, src);
+            Mat dst2 = new Mat();
 
-        src.copyTo(src, mask);
+            Imgproc.threshold(dst, dst, 70, 255, Imgproc.THRESH_BINARY);
+            Core.merge(Arrays.asList(dst, dst, dst), dst2);
+            Core.bitwise_and(hsvFrame, dst2, hsvFrame);
+            return hsvFrame;
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return null;
     }
 
-    public static MatOfPoint getHandContour(Mat frame, Mat handHist){
-        Mat dst  = new Mat(frame.size(), frame.channels());
-        applyHistMask(frame, handHist);
-        MatOfPoint contour = FrameProcessor.getMaxContour(frame);
-//        Imgproc.drawContours(dst, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
-//
-//        Mat kernel = new Mat(5, 5, CvType.CV_32F);
-//        Imgproc.dilate(dst, dst, kernel);
-//        Imgproc.erode(dst, dst, kernel);
-//
-//        contour = FrameProcessor.getMaxContour(dst);
-        Imgproc.drawContours(frame, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
 
-        Mat kernel = new Mat(5, 5, CvType.CV_32F);
-        // Bug from here
-        Imgproc.dilate(frame, frame, kernel);
-        Imgproc.erode(frame, frame, kernel);
-
-        contour = FrameProcessor.getMaxContour(frame);
-        return contour;
-    }
-
-    public static Pair<Point, Double> findPalm(Mat frame, Mat handHist){
-        MatOfPoint handContour = getHandContour(frame, handHist);
+    public static Pair<Point, Integer> findPalm(MatOfPoint handContour){
         Rect rect = Imgproc.boundingRect(handContour);
         int max_d = 0;
         Point center = null;
 
         int y_start = (int) Math.round(rect.y + 0.2 * rect.height);
         int y_end = (int) Math.round(rect.y + 0.8 * rect.height);
-        int y_step = (int) Math.max(1, Math.round(0.6 / 100 * rect.height));
+        int y_step = (int) Math.max(1, Math.round(0.6 / 40 * rect.height));
         int x_start = (int) Math.round(rect.x + 0.3 * rect.width);
         int x_end = (int) Math.round(rect.x + 0.7 * rect.width);
-        int x_step = (int) Math.max(1, Math.round(0.4 / 100 * rect.width));
+        int x_step = (int) Math.max(1, Math.round(0.4 / 40 * rect.width));
 
         // initialize src
         MatOfPoint2f handContour2f = new MatOfPoint2f();
@@ -86,18 +73,46 @@ public class HandDetector {
                 }
             }
         }
-
-        return new Pair(center, max_d);
+        return new Pair<>(center, max_d);
     }
 
-    public static void drawPalmCentroid(Mat frame, Mat handHist){
+    public static List<Point> findFingers(MatOfPoint hull, Point palmCenter, int palmRadius) {
+        double finger_thresh_l = 2.0;
+        double finger_thresh_u = 3.8;
+        List<Point> fingers = new ArrayList<>();
+        List<Point> hullPoints = new ArrayList<>();
+        int dist;
+
+        Point[] arrHull = hull.toArray();
+        for (int i =0 ; i < arrHull.length; i++) {
+            dist = (int)(Math.pow(arrHull[i].x - arrHull[(i+1)%arrHull.length].x, 2)+
+                         Math.pow(arrHull[i].y - arrHull[(i+1)%arrHull.length].y, 2));
+            if (dist > 400) {
+                hullPoints.add(arrHull[i]);
+            }
+        }
+
+        for (int i =0 ; i < hullPoints.size(); i++) {
+            dist = (int)(Math.pow(hullPoints.get(i).x - palmCenter.x, 2)+
+                    Math.pow(hullPoints.get(i).y - palmCenter.y, 2));
+
+            // omit some condition
+            // dist > finger_thresh_l * palmRadius && dist < finger_thresh_u *palmRadius &&
+
+            if (hullPoints.get(i).y < palmCenter.y + palmRadius ) {
+                fingers.add(arrHull[i]);
+            }
+        }
+
+        return hullPoints;
+
+    }
+
+    public static void drawPalm(Mat frame, Point center, int radius){
         Mat frameCpy = new Mat();
         frame.copyTo(frameCpy);
-        Pair<Point, Double> palm = findPalm(frameCpy, handHist);
-        Point palmCenter = palm.first;
-        double palmRad = palm.second;
-        Imgproc.circle(frame, palmCenter, (int) palmRad, new Scalar(255,0,0), 2);
-        Imgproc.circle(frame, palmCenter, 5, new Scalar(255,0,0), -1);
+        Imgproc.circle(frame, center, radius, new Scalar(255,0,0), 2);
+        Imgproc.circle(frame, center, 3, new Scalar(255,0,0), -1);
     }
 
     // from trained model
