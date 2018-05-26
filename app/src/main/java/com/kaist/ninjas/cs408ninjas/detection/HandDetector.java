@@ -24,7 +24,6 @@ import java.util.List;
 
 public class HandDetector {
     public static Mat applyHistMask(Mat frameMat, Mat hist){
-        try{
             Mat hsvFrame = frameMat.clone();
             Mat dst = new Mat();
             List<Mat> frames = new ArrayList<Mat>();
@@ -38,12 +37,11 @@ public class HandDetector {
 
             Imgproc.threshold(dst, dst, 70, 255, Imgproc.THRESH_BINARY);
             Core.merge(Arrays.asList(dst, dst, dst), dst2);
+
+            Imgproc.GaussianBlur(dst2, dst2, new Size(3,3),0);
+
             Core.bitwise_and(hsvFrame, dst2, hsvFrame);
             return hsvFrame;
-        } catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return null;
     }
 
 
@@ -83,6 +81,9 @@ public class HandDetector {
         List<Point> hullPoints = new ArrayList<>();
         int dist;
 
+        Log.i("PALM RADIUS", ""+palmRadius);
+//        int clusterMaxRange = Math.max(palmRadius / )
+
         Point[] arrHull = hull.toArray();
         for (int i =0 ; i < arrHull.length; i++) {
             dist = (int)(Math.pow(arrHull[i].x - arrHull[(i+1)%arrHull.length].x, 2)+
@@ -99,12 +100,12 @@ public class HandDetector {
             // omit some condition
             // dist > finger_thresh_l * palmRadius && dist < finger_thresh_u *palmRadius &&
 
-            if (hullPoints.get(i).y < palmCenter.y + palmRadius ) {
-                fingers.add(arrHull[i]);
+            if (hullPoints.get(i).x < palmCenter.x + palmRadius ) {
+                fingers.add(hullPoints.get(i));
             }
         }
 
-        return hullPoints;
+        return fingers;
 
     }
 

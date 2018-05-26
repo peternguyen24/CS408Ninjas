@@ -7,6 +7,8 @@ import android.graphics.Paint;
 import android.util.Log;
 import android.util.Pair;
 
+import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -15,8 +17,10 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -58,9 +62,6 @@ public class FrameProcessor {
     }
 
 
-    public static void flip(Mat src, Mat dst){
-        flip(src, dst);
-    }
 
     public static MatOfInt getHull(MatOfPoint contour){
         MatOfInt hull = new MatOfInt();
@@ -68,19 +69,20 @@ public class FrameProcessor {
         return hull;
     }
 
+    // Assume src is already in HSV area
     public static MatOfPoint getMaxContour(Mat src){
-        Mat dst = new Mat(src.size(), CvType.CV_8UC3);
+        Mat dst = new Mat();
+//        Imgproc.cvtColor(src, dst, Imgproc.COLOR_HSV2BGR);
         Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGR2GRAY);
         Imgproc.threshold(dst, dst, 0, 255, 0);
 
         // Get contours
-        Mat temp = new Mat();
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-        Imgproc.findContours(dst, contours, temp,Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        temp.release();
+        Imgproc.findContours(dst, contours, new Mat(),Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
         int maxIndex = 0;
         double maxArea = 0;
+        Log.i("CONTOURS SIZE", ""+contours.size());
         for(int i=0;i<contours.size();i++){
             MatOfPoint cnt = contours.get(i);
             double area = Imgproc.contourArea(cnt);
@@ -89,6 +91,7 @@ public class FrameProcessor {
                 maxArea = area;
             }
         }
+        if (contours.size() == 0) return null;
         return contours.get(maxIndex);
     }
 
@@ -125,34 +128,16 @@ public class FrameProcessor {
 
     public static Mat getHandHist (Mat frame){
         Size size = frame.size();
-//        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2HSV);
-        Mat handHistImage = new Mat(60, 60, frame.type());
+        Mat handHistImage = new Mat(120, 120, frame.type());
 
         for(int i = 0; i<9; i++){
             int x = (7+3*(i%3))*(int) size.width/20;
             int y = (6+4*(i/3))*(int) size.height/20;
-            Rect roi = new Rect(x, y, 20, 20);
-            Rect dstRange = new Rect((i%3)*20,(i/3)*20, 20, 20);
-//            frame.submat(roi).copyTo(handHistImage.colRange(
-//                    (i%3)*20, (i%3)*20+20).rowRange((i/3)*20,(i/3)*20 + 20));
-//            if (frame.submat(roi).type()== handHistImage.submat(dstRange).type()) {
-//                Log.i("ASSERT ===== ","OK");
-//            } else {
-//                Log.i("ASSERT ===== "," NOT OK"
-//                        +frame.submat(roi).type()+" "
-//                        +handHistImage.submat(dstRange).type() + " "
-//                        +handHistImage.type() + ' '
-//                        );
-//            }
-
+            Rect roi = new Rect(x, y, 40, 40);
+            Rect dstRange = new Rect((i%3)*40,(i/3)*40, 40, 40);
             frame.submat(roi).copyTo(handHistImage.submat(dstRange));
-//            Log.i("MATRIX ", frame.submat(roi).dump());
-//            Log.i("COLOR Origin", ""+x+" "+y+ " " + frame.get(x, y).toString() );
-//            Log.i("COLOR", ""+i%3+" "+i/3+ " "
-//                    +handHistImage.get(i%3, i/3).toString() );
         }
 
-//        Log.i("MATRIX ", handHistImage.dump());
         // Convert area to HSV
         Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
 
@@ -166,16 +151,6 @@ public class FrameProcessor {
 
         }
 
-
-//        List<Mat> images = new ArrayList<Mat>();
-//        Core.split(mask, images);
-//        MatOfInt channels = new MatOfInt(0);
-//        MatOfFloat histRange = new MatOfFloat(0,256);
-//        MatOfInt histSize = new MatOfInt(256);
-//        Imgproc.calcBackProject(images.subList(0,1), channels, new Mat(), hist, histRange, histSize, false);
-
-
-//        return hist;
         return null;
     }
 
@@ -189,31 +164,80 @@ public class FrameProcessor {
             paint.setAntiAlias(true);
             paint.setColor(Color.GREEN);
             Canvas canvas = new Canvas(bitmap);
-            canvas.drawRect(x-2, y-2, x + 22, y +22, paint);
+            canvas.drawRect(x-2, y-2, x + 42, y +42, paint);
         }
     }
 
-    public static Mat getHistMask(Mat frameMat, Mat hist) {
-        try{
-            Mat hsvFrame = new Mat(frameMat.width(), frameMat.height(), frameMat.type());
-            Mat dst = new Mat();
-            Imgproc.cvtColor(frameMat, hsvFrame, Imgproc.COLOR_BGR2HSV);
-            List<Mat> frames = new ArrayList<Mat>();
-            frames.add(hsvFrame);
-            Imgproc.calcBackProject(frames, new MatOfInt(0, 1), hist, dst, new MatOfFloat(0, 180, 0, 256), 1);
+    public static MatOfPoint getHandContour(Mat frame){
+        Mat dst  = new Mat(frame.size(), frame.channels());
 
-            Mat disc = Imgproc.getStructuringElement(Imgproc.MORPH_OPEN, new Size(11, 11));
-            Imgproc.filter2D(dst, dst, -1, disc);
+        // Find the contour that corresponding to hand
+        MatOfPoint contour;
 
-            Mat dst2 = new Mat();
-            Imgproc.threshold(dst, dst, 100, 225, Imgproc.THRESH_BINARY);
-            Core.merge(Arrays.asList(dst, dst, dst), dst2);
-            Core.bitwise_and(hsvFrame, dst2, hsvFrame);
-            return hsvFrame;
-        } catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return null;
+//        Imgproc.drawContours(dst, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
+//
+//        Mat kernel = new Mat(5, 5, CvType.CV_32F);
+//        Imgproc.dilate(dst, dst, kernel);
+//        Imgproc.erode(dst, dst, kernel);
+//
+//        contour = FrameProcessor.getMaxContour(dst);
+//        Imgproc.drawContours(frame, Arrays.asList(contour), -1, new Scalar(0,255,0), 3);
+
+//        Mat kernel = new Mat(5, 5, CvType.CV_32F);
+//        // Bug from here
+//        Imgproc.dilate(frame, frame, kernel);
+//        Imgproc.erode(frame, frame, kernel);
+        contour = FrameProcessor.getMaxContour(frame);
+        return contour;
     }
+
+    // frameMat receive as RGB, return as RGB
+    public static Mat processFrame(Mat orgMat, Mat hist) {
+        Mat frameMat = orgMat.clone();
+        Imgproc.cvtColor(frameMat, frameMat, Imgproc.COLOR_BGR2HSV);
+
+        Core.flip(frameMat, frameMat, 0);
+
+        Mat handMask = HandDetector.applyHistMask(frameMat, hist);
+        MatOfPoint handContour = getHandContour(handMask);
+
+        if (handContour != null) {
+            MatOfPoint hull = extractHull(handContour);
+            Pair<Point, Integer> palmInfo = HandDetector.findPalm(handContour);
+            List<Point> fingers = HandDetector.findFingers(hull, palmInfo.first, palmInfo.second);
+            Point palmCenter = palmInfo.first;
+
+            plotPoints(handMask, fingers);
+            HandDetector.drawPalm(handMask, palmInfo.first, palmInfo.second);
+            Imgproc.drawContours(handMask, Arrays.asList(hull), 0, new Scalar(0,255,255), 2);
+//            Imgproc.rectangle(handMask, palmCenter, new Point(palmCenter.x + 100, palmCenter.y + 10), new Scalar(0,255,255),-1);
+        }
+
+
+
+        Imgproc.cvtColor(handMask, handMask, Imgproc.COLOR_HSV2BGR);
+        return handMask;
+    }
+
+    public static MatOfPoint extractHull(MatOfPoint contour) {
+        MatOfInt hullIds = getHull(contour);
+
+        int[] arrHullId = hullIds.toArray();
+        Point[] arrContour = contour.toArray();
+        Point[] arrPoints = new Point[arrHullId.length];
+        for (int i = 0; i < arrPoints.length; i++) {
+            arrPoints[i] = arrContour[arrHullId[i]];
+        }
+        MatOfPoint hull = new MatOfPoint();
+        hull.fromArray(arrPoints);
+        return hull;
+    }
+
+    public static void plotPoints(Mat frame, List<Point> points){
+        for (Point point : points) {
+            Imgproc.circle(frame, point, 10, new Scalar(120, 255, 255));
+        }
+    }
+
 
 }

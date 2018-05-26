@@ -110,6 +110,9 @@ public class CameraDetectionPreview extends Activity {
             public void onImageAvailable(ImageReader reader) {
                 final Image image;
                 image = reader.acquireLatestImage();
+                if (image== null || image.getPlanes() ==null) {
+                    return;
+                }
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
@@ -133,7 +136,7 @@ public class CameraDetectionPreview extends Activity {
 
                 // This hand hist is in HSV space
                 if (handHist != null) {
-                    tmp = FrameProcessor.getHistMask(tmp, handHist);
+                    tmp = FrameProcessor.processFrame(tmp, handHist);
 //                    tmp = handHist.clone();
 //                    Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
                 } else {
@@ -147,7 +150,6 @@ public class CameraDetectionPreview extends Activity {
                 //
 
                 // Convert back to scale and display
-                Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
                 Utils.matToBitmap(tmp, bmp);
 
                 image.close();
@@ -176,6 +178,9 @@ public class CameraDetectionPreview extends Activity {
             public void onImageAvailable(ImageReader reader) {
                 final Image image;
                 image = reader.acquireLatestImage();
+                if (image== null || image.getPlanes() ==null) {
+                    return;
+                }
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.capacity()];
                 buffer.get(bytes);
