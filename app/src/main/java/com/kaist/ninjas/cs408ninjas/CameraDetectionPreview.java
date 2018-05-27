@@ -141,7 +141,6 @@ public class CameraDetectionPreview extends Activity {
 //                    Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
                 } else {
                     Log.i("CAPTURE", "======================NO HAND HIST");
-                    return;
                 }
 
                 //test
