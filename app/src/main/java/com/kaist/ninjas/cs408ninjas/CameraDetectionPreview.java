@@ -147,7 +147,6 @@ public class CameraDetectionPreview extends Activity {
 
                 } else {
                     Log.i("CAPTURE", "======================NO HAND HIST");
-                    return;
                 }
 
                 //test
