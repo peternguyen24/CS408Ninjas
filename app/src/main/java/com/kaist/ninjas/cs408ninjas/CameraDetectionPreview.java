@@ -28,6 +28,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -38,6 +39,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.kaist.ninjas.cs408ninjas.detection.Gesture;
 import com.kaist.ninjas.cs408ninjas.detection.MotionDetector;
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 
@@ -85,6 +87,7 @@ public class CameraDetectionPreview extends Activity {
     private Mat handHist = null;
     private boolean isDetecting;
     private boolean isGettingHist;
+    private MotionDetector motionDetector = new MotionDetector(30);
 
     // gesture detection
     private MotionDetector gestureDetector;
@@ -136,9 +139,12 @@ public class CameraDetectionPreview extends Activity {
 
                 // This hand hist is in HSV space
                 if (handHist != null) {
-                    tmp = FrameProcessor.processFrame(tmp, handHist);
-//                    tmp = handHist.clone();
-//                    Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_HSV2BGR);
+                    HandInfo handInfo = FrameProcessor.processFrame(tmp, handHist);
+                    tmp = handInfo.handMask;
+//                    Pair<Gesture, Point> pair = FrameProcessor.getGesture(handInfo);
+//                    motionDetector.saveToBuffer(pair.first, pair.second);
+//                    motionDetector.detectMotion();
+
                 } else {
                     Log.i("CAPTURE", "======================NO HAND HIST");
                     return;

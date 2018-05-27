@@ -1,5 +1,5 @@
 package com.kaist.ninjas.cs408ninjas.detection;
 
-enum Gesture {
+public enum Gesture {
     V, Call, Fist, Point, Thumb, Act, Palm
 }

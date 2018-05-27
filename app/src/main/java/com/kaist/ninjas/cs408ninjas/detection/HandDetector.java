@@ -117,7 +117,7 @@ public class HandDetector {
     }
 
     // from trained model
-    public static ArrayList<Pair<Gesture, Point>> detectGesture(Mat frame){
+    public static ArrayList<Pair<Gesture, Point>> receiveGesture(Mat frame){
         // detect gesture and its location here!
         ArrayList<Pair<Gesture,Point>> detected = new ArrayList<>();
         Gesture detectedGes1 = Gesture.Act;
@@ -130,6 +130,35 @@ public class HandDetector {
         if(detectedLoc2 != null){
             detected.add(new Pair(detectedGes2, detectedLoc2));
         }
+
+
         return detected;
+    }
+
+    // from opencv
+    public static Gesture detectGesture(Pair<Point, Integer> palmInfo,  List<Point> fingers){
+        Point palmCenter = palmInfo.first;
+        int palmRadius = palmInfo.second;
+        Gesture res = null;
+
+        // detect palm
+        if(fingers.size() == 5){
+            boolean detectPalm = true;
+            for (Point finger: fingers){
+                double dist = Math.sqrt(Math.pow(finger.x - palmCenter.x, 2)+ Math.pow(finger.y - palmCenter.y, 2));
+                if(dist < palmRadius){
+                    detectPalm = false;
+                }
+            }
+            if(detectPalm){
+                res = Gesture.Palm;
+            }
+        }
+
+        // detect fist
+        if (fingers.size() == 0) {
+            res = Gesture.Fist;
+        }
+        return res;
     }
 }

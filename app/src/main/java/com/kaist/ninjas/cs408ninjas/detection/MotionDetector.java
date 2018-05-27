@@ -19,7 +19,7 @@ public class MotionDetector {
     // null init gesture
     // null position
 
-    public void GestureDetector(int bufferNum){
+    public MotionDetector(int bufferNum){
         initGesture1 = null;
         initGesture2 = null;
         posBuffer1 = new Point[bufferNum];
@@ -104,7 +104,7 @@ public class MotionDetector {
         return null;
     }
 
-    public boolean isStill(Point[] posBuffer){
+    private boolean isStill(Point[] posBuffer){
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -131,7 +131,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideRight(Point[] posBuffer) {
+    private boolean isSlideRight(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -158,7 +158,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideLeft(Point[] posBuffer) {
+    private boolean isSlideLeft(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -185,7 +185,7 @@ public class MotionDetector {
     }
 
 
-    public boolean isSlideUp(Point[] posBuffer) {
+    private boolean isSlideUp(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -211,7 +211,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideDown(Point[] posBuffer) {
+    private boolean isSlideDown(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -237,7 +237,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public void reset(){
+    private void reset(){
         for (int i = 0; i < maxIndex; i++) {
             posBuffer1[i] = null;
             posBuffer2[i] = null;
