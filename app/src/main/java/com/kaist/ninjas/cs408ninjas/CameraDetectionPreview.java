@@ -88,7 +88,7 @@ public class CameraDetectionPreview extends Activity {
     private Mat handHist = null;
     private boolean isDetecting;
     private boolean isGettingHist;
-    private MotionDetector motionDetector = new MotionDetector(30);
+    private MotionDetector motionDetector = new MotionDetector(4);
 
     // gesture detection
     private MotionDetector gestureDetector;
@@ -114,7 +114,7 @@ public class CameraDetectionPreview extends Activity {
             public void onImageAvailable(ImageReader reader) {
                 final Image image;
                 image = reader.acquireLatestImage();
-                if (image== null || image.getPlanes() ==null) {
+                if (image== null || image.getPlanes() == null) {
                     return;
                 }
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
@@ -142,10 +142,15 @@ public class CameraDetectionPreview extends Activity {
                 if (handHist != null) {
                     HandInfo handInfo = FrameProcessor.processFrame(tmp, handHist);
                     tmp = handInfo.handMask;
-                    motionDetector.saveToBuffer(handInfo.palmInfo.first);
-                    Motion motion = motionDetector.detectMotion();
-                    if (motion!=null){
-                        Log.i("CAPTURE", motion.toString());
+                    if(handInfo.palmInfo != null){
+                        motionDetector.saveToBuffer(handInfo.palmInfo.first);
+                        Motion motion = motionDetector.detectMotion();
+                        if (motion != null){
+                            Log.i("MOTION", motion.toString());
+                        }
+                    }
+                    else{
+                        motionDetector.saveToBuffer(null);
                     }
 //                    Pair<Gesture, Point> pair = FrameProcessor.getGesture(handInfo);
 //                    motionDetector.saveToBuffer(pair.first, pair.second);
