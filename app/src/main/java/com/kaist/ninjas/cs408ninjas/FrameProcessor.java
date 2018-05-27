@@ -8,7 +8,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
-
+import com.kaist.ninjas.cs408ninjas.detection.Gesture;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -192,7 +192,7 @@ public class FrameProcessor {
     }
 
     // frameMat receive as RGB, return as RGB
-    public static Mat processFrame(Mat orgMat, Mat hist) {
+    public static HandInfo processFrame(Mat orgMat, Mat hist) {
         Mat frameMat = orgMat.clone();
         Imgproc.cvtColor(frameMat, frameMat, Imgproc.COLOR_BGR2HSV);
 
@@ -200,12 +200,13 @@ public class FrameProcessor {
 
         Mat handMask = HandDetector.applyHistMask(frameMat, hist);
         MatOfPoint handContour = getHandContour(handMask);
+        Pair<Point, Integer> palmInfo = null;
+        List<Point> fingers = null;
 
         if (handContour != null) {
             MatOfPoint hull = extractHull(handContour);
-            Pair<Point, Integer> palmInfo = HandDetector.findPalm(handContour);
-            List<Point> fingers = HandDetector.findFingers(hull, palmInfo.first, palmInfo.second);
-            Point palmCenter = palmInfo.first;
+            palmInfo = HandDetector.findPalm(handContour);
+            fingers = HandDetector.findFingers(hull, palmInfo.first, palmInfo.second);
 
             plotPoints(handMask, fingers);
             HandDetector.drawPalm(handMask, palmInfo.first, palmInfo.second);
@@ -213,10 +214,14 @@ public class FrameProcessor {
 //            Imgproc.rectangle(handMask, palmCenter, new Point(palmCenter.x + 100, palmCenter.y + 10), new Scalar(0,255,255),-1);
         }
 
-
-
         Imgproc.cvtColor(handMask, handMask, Imgproc.COLOR_HSV2BGR);
-        return handMask;
+        return new HandInfo(handMask, palmInfo, fingers);
+    }
+
+    public static Pair<Gesture, Point> getGesture(HandInfo handInfo){
+        Gesture gesture = HandDetector.detectGesture(handInfo.palmInfo, handInfo.fingers);
+        Point centroid = handInfo.palmInfo.first;
+        return new Pair<>(gesture, centroid);
     }
 
     public static MatOfPoint extractHull(MatOfPoint contour) {
@@ -240,4 +245,17 @@ public class FrameProcessor {
     }
 
 
+}
+
+
+class HandInfo {
+    public Mat handMask;
+    public Pair<Point, Integer> palmInfo;
+    public List<Point> fingers;
+
+    public HandInfo(Mat handMask, Pair<Point, Integer> palmInfo, List<Point> fingers){
+        this.handMask = handMask;
+        this.palmInfo = palmInfo;
+        this.fingers = fingers;
+    }
 }

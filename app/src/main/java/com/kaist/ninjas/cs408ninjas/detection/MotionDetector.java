@@ -19,7 +19,7 @@ public class MotionDetector {
     // null init gesture
     // null position
 
-    public void GestureDetector(int bufferNum){
+    public MotionDetector(int bufferNum){
         initGesture1 = null;
         initGesture2 = null;
         posBuffer1 = new Point[bufferNum];
@@ -27,6 +27,11 @@ public class MotionDetector {
         maxIndex = bufferNum-1;
         currentIndex1 = 0;
         currentIndex2 = 0;
+    }
+
+    public void saveToBuffer(Point centroid){
+        posBuffer1[currentIndex1] = centroid;
+        currentIndex1 = (currentIndex1 + 1) % maxIndex;
     }
 
     public void saveToBuffer(Gesture gesture, Point centroid) {
@@ -50,61 +55,85 @@ public class MotionDetector {
         currentIndex2 = (currentIndex2 + 1) % maxIndex;
     }
 
+//    public Motion detectMotion(){
+//        Point currentP1 = posBuffer1[currentIndex2];
+//        Point currentP2 = posBuffer2[currentIndex2];
+//        if(currentP1 != null && currentP2 != null){
+//            if (initGesture1 != Gesture.V || initGesture2 != Gesture.V){
+//                return null;
+//            }
+//            // detect zooming gesture
+//        }
+//
+//        if (isSlideUp(posBuffer1)){
+//            switch(initGesture1){
+//                case Fist:
+//                    return Motion.BrightUp;
+//                case V:
+//                    return Motion.VolUp;
+//            }
+//        }
+//
+//        else if (isSlideDown(posBuffer1)){
+//            switch(initGesture1){
+//                case Fist:
+//                    return Motion.BrightUp;
+//                case V:
+//                    return Motion.VolUp;
+//            }
+//        }
+//
+//        else if (isSlideLeft(posBuffer1)){
+//            switch(initGesture1){
+//                case Palm:
+//                    return Motion.Prev;
+//                case Thumb:
+//                    return Motion.Backw;
+//            }
+//        }
+//        else if (isSlideRight(posBuffer1)){
+//            switch(initGesture1){
+//                case Palm:
+//                    return Motion.Next;
+//                case Thumb:
+//                    return Motion.Forw;
+//            }
+//        }
+//        else if (isStill(posBuffer1)){
+//            switch(initGesture1){
+//                case Call:
+//                    return Motion.RecvCall;
+//            }
+//        }
+//
+//        return null;
+//    }
+
     public Motion detectMotion(){
-        Point currentP1 = posBuffer1[currentIndex2];
-        Point currentP2 = posBuffer2[currentIndex2];
-        if(currentP1 != null && currentP2 != null){
-            if (initGesture1 != Gesture.V || initGesture2 != Gesture.V){
+        for (int i = 0; i < posBuffer1.length; i++) {
+            if(posBuffer1[i] == null){
                 return null;
             }
-            // detect zooming gesture
         }
-
-        if (isSlideUp(posBuffer1)){
-            switch(initGesture1){
-                case Fist:
-                    return Motion.BrightUp;
-                case V:
-                    return Motion.VolUp;
-            }
+            if(isSlideUp(posBuffer1)){
+            return Motion.VolUp;
         }
-
-        else if (isSlideDown(posBuffer1)){
-            switch(initGesture1){
-                case Fist:
-                    return Motion.BrightUp;
-                case V:
-                    return Motion.VolUp;
-            }
+        else if(isSlideDown(posBuffer1)){
+            return Motion.VolDw;
         }
-
-        else if (isSlideLeft(posBuffer1)){
-            switch(initGesture1){
-                case Palm:
-                    return Motion.Prev;
-                case Thumb:
-                    return Motion.Backw;
-            }
+        else if(isSlideLeft(posBuffer1)){
+            return Motion.Backw;
         }
-        else if (isSlideRight(posBuffer1)){
-            switch(initGesture1){
-                case Palm:
-                    return Motion.Next;
-                case Thumb:
-                    return Motion.Forw;
-            }
+        else if(isSlideRight(posBuffer1)){
+            return Motion.Next;
         }
-        else if (isStill(posBuffer1)){
-            switch(initGesture1){
-                case Call:
-                    return Motion.RecvCall;
-            }
+        else if(isStill(posBuffer1)){
+            return Motion.Play;
         }
-
         return null;
     }
 
-    public boolean isStill(Point[] posBuffer){
+    private boolean isStill(Point[] posBuffer){
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -131,7 +160,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideRight(Point[] posBuffer) {
+    private boolean isSlideRight(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -158,7 +187,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideLeft(Point[] posBuffer) {
+    private boolean isSlideLeft(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -185,7 +214,7 @@ public class MotionDetector {
     }
 
 
-    public boolean isSlideUp(Point[] posBuffer) {
+    private boolean isSlideUp(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -211,7 +240,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public boolean isSlideDown(Point[] posBuffer) {
+    private boolean isSlideDown(Point[] posBuffer) {
         boolean detected = false;
         double current_x = posBuffer[currentIndex1].x;
         double current_y = posBuffer[currentIndex1].y;
@@ -237,7 +266,7 @@ public class MotionDetector {
         return detected;
     }
 
-    public void reset(){
+    private void reset(){
         for (int i = 0; i < maxIndex; i++) {
             posBuffer1[i] = null;
             posBuffer2[i] = null;
@@ -246,8 +275,4 @@ public class MotionDetector {
         initGesture2=null;
 
     }
-}
-
-enum Motion{
-    Play, Pause, Next, Prev, VolUp, VolDw, Forw, Backw, BrightUp, BrightDw, RecvCall
 }
