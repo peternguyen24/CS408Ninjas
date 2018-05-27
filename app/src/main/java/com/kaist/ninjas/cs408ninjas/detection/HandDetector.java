@@ -159,6 +159,33 @@ public class HandDetector {
         if (fingers.size() == 0) {
             res = Gesture.Fist;
         }
+
+        // detect call, act, v
+        if (fingers.size() == 2){
+            Point finger1 = fingers.get(0);
+            Point finger2 = fingers.get(1);
+            double xDist = finger1.x - finger2.x;
+            if (xDist > 1.7 * palmRadius){
+                res = Gesture.Call;
+            }
+            if (xDist > 0.3 * palmRadius && xDist < 0.7 * palmRadius){
+                res = Gesture.V;
+            }
+            if (xDist > palmRadius && xDist < 1.3 * palmRadius){
+                res = Gesture.Act;
+            }
+        }
+
+        if (fingers.size() == 1){
+            Point finger = fingers.get(0);
+            double yDist = finger.y - palmCenter.y;
+            if (yDist > palmRadius){
+                res = Gesture.Point;
+            }
+            if (yDist < palmRadius){
+                res = Gesture.Thumb;
+            }
+        }
         return res;
     }
 }

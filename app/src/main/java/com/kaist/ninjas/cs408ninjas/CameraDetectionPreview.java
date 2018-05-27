@@ -40,6 +40,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.kaist.ninjas.cs408ninjas.detection.Gesture;
+import com.kaist.ninjas.cs408ninjas.detection.Motion;
 import com.kaist.ninjas.cs408ninjas.detection.MotionDetector;
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 
@@ -141,6 +142,11 @@ public class CameraDetectionPreview extends Activity {
                 if (handHist != null) {
                     HandInfo handInfo = FrameProcessor.processFrame(tmp, handHist);
                     tmp = handInfo.handMask;
+                    motionDetector.saveToBuffer(handInfo.palmInfo.first);
+                    Motion motion = motionDetector.detectMotion();
+                    if (motion!=null){
+                        Log.i("CAPTURE", motion.toString());
+                    }
 //                    Pair<Gesture, Point> pair = FrameProcessor.getGesture(handInfo);
 //                    motionDetector.saveToBuffer(pair.first, pair.second);
 //                    motionDetector.detectMotion();
