@@ -81,6 +81,8 @@ public class CameraDetectionPreview extends Activity {
     private Button previewHistButton;
     private Button presetHistButton;
 
+    private MediaControllerHub mediaControllerHub;
+
     private ImageView imageView;
     private CameraCaptureSession mCameraCaptureSession;
     private HandlerThread backgroundThread;
@@ -106,6 +108,7 @@ public class CameraDetectionPreview extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mediaControllerHub = new MediaControllerHub(this);
         setContentView(R.layout.activity_camera_detection_preview);
 
         captureButton = findViewById(R.id.capture_button);
@@ -153,6 +156,28 @@ public class CameraDetectionPreview extends Activity {
                         Motion motion = motionDetector.detectMotion();
                         if (motion != null){
                             Log.i("MOTION", motion.toString());
+                            switch (motion) {
+                                case Play: {
+                                    mediaControllerHub.play();
+                                    break;
+                                }
+                                case Pause: {
+                                    mediaControllerHub.pause();
+                                    break;
+                                }
+                                case VolUp: {
+                                    mediaControllerHub.volumeUp();
+                                    break;
+                                }
+                                case VolDw: {
+                                    mediaControllerHub.volumeDown();
+                                    break;
+                                }
+                                case Backw: {
+                                    mediaControllerHub.previous();
+                                    break;
+                                }
+                            }
                         }
                     }
                     else{
