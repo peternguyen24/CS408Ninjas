@@ -110,6 +110,7 @@ public class HandDetector {
     }
 
     public static void drawPalm(Mat frame, Point center, int radius){
+        if(center == null) return;
         Mat frameCpy = new Mat();
         frame.copyTo(frameCpy);
         Imgproc.circle(frame, center, radius, new Scalar(255,0,0), 2);
