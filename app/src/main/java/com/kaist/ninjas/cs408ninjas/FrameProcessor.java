@@ -209,6 +209,7 @@ public class FrameProcessor {
             fingers = HandDetector.findFingers(hull, palmInfo.first, palmInfo.second);
 
             plotPoints(handMask, fingers);
+
             HandDetector.drawPalm(handMask, palmInfo.first, palmInfo.second);
             Imgproc.drawContours(handMask, Arrays.asList(hull), 0, new Scalar(0,255,255), 2);
 //            Imgproc.rectangle(handMask, palmCenter, new Point(palmCenter.x + 100, palmCenter.y + 10), new Scalar(0,255,255),-1);
