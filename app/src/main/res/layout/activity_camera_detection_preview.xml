@@ -22,9 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginBottom="21dp"
-        android:layout_marginEnd="96dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="22dp"
         android:text="Capture" />
 
     <Button
@@ -33,6 +32,15 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignTop="@+id/capture_button"
-        android:layout_marginStart="88dp"
+        android:layout_marginStart="50dp"
         android:text="HIST" />
+
+    <Button
+        android:id="@+id/preset_hist_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/capture_button"
+        android:layout_marginEnd="30dp"
+        android:text="Preset Hist" />
 </RelativeLayout>

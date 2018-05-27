@@ -48,12 +48,15 @@ import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -76,6 +79,7 @@ public class CameraDetectionPreview extends Activity {
     private CameraDevice mCameraDevice;
     private Button captureButton;
     private Button previewHistButton;
+    private Button presetHistButton;
 
     private ImageView imageView;
     private CameraCaptureSession mCameraCaptureSession;
@@ -107,6 +111,8 @@ public class CameraDetectionPreview extends Activity {
         captureButton = findViewById(R.id.capture_button);
         previewHistButton = findViewById(R.id.preview_hist_button);
         imageView = findViewById(R.id.image_view);
+        presetHistButton = findViewById(R.id.preset_hist_button);
+
 
         // for CAPTURE - detection
         readerListener = new ImageReader.OnImageAvailableListener() {
@@ -302,6 +308,31 @@ public class CameraDetectionPreview extends Activity {
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
+                }
+            }
+        });
+
+        presetHistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Mat> listHandImage = new ArrayList<>();
+                try {
+                    for (int i = 5; i <=5; i++) {
+                        String name = Integer.toString(i) + ".png";
+                        InputStream is = getAssets().open(name);
+                        BitmapFactory.Options bFO = new BitmapFactory.Options();
+                        bFO.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+                        Bitmap bmp = BitmapFactory.decodeStream(is, null, bFO);
+                        Mat mat = new Mat();
+                        Utils.bitmapToMat(bmp, mat);
+                        listHandImage.add(mat);
+                    }
+                    handHist = new Mat();
+                    Imgproc.calcHist(listHandImage, new MatOfInt(0,1),new Mat(), handHist,
+                            new MatOfInt(180,256), new MatOfFloat(1, 180, 1, 256)  );
+                } catch (IOException err) {
+                    Log.e("PRESET HIST", "CAN'T GET PRESET HIST");
                 }
             }
         });
