@@ -5,13 +5,9 @@ import android.util.Log;
 import org.opencv.core.Point;
 
 public class MotionDetector {
-    Gesture initGesture1;
-    Gesture initGesture2;
     Point[] posBuffer1;
-    Point[] posBuffer2;
     int count;
-    int currentIndex1;
-    int currentIndex2;
+    int currentIndex;
 
     // detect gesture
     // detect position
@@ -22,93 +18,37 @@ public class MotionDetector {
     // null position
 
     public MotionDetector(int bufferNum){
-        initGesture1 = null;
-        initGesture2 = null;
         posBuffer1 = new Point[bufferNum];
-        posBuffer2 = new Point[bufferNum];
         count = bufferNum;
-        currentIndex1 = 0;
-        currentIndex2 = 0;
+        currentIndex = 0;
     }
 
     public void saveToBuffer(Point centroid){
+        currentIndex = (currentIndex + 1) % count;
+        posBuffer1[currentIndex] = centroid;
         if (centroid != null){
-            Log.i("MOTION","palm centroid["+ currentIndex1 +"]: " + centroid.x + ", " + centroid.y);
+            Log.i("GMOTION","palm centroid["+ currentIndex +"]: " + centroid.x + ", " + centroid.y);
         }
-        posBuffer1[currentIndex1] = centroid;
-        currentIndex1 = (currentIndex1 + 1) % count;
     }
 
-    public void saveToBuffer(Gesture gesture, Point centroid) {
-        if(initGesture1 != null && initGesture1 != gesture){
-            reset();
-        }
-        initGesture1 = gesture;
-        posBuffer1[currentIndex1] = centroid;
-        currentIndex1 = (currentIndex1 + 1) % count;
-    }
 
-//    public Motion detectMotion(){
-//        Point currentP1 = posBuffer1[currentIndex2];
-//        Point currentP2 = posBuffer2[currentIndex2];
-//        if(currentP1 != null && currentP2 != null){
-//            if (initGesture1 != Gesture.V || initGesture2 != Gesture.V){
-//                return null;
-//            }
-//            // detect zooming gesture
-//        }
-//
-//        if (isSlideUp(posBuffer1)){
-//            switch(initGesture1){
-//                case Fist:
-//                    return Motion.BrightUp;
-//                case V:
-//                    return Motion.VolUp;
-//            }
-//        }
-//
-//        else if (isSlideDown(posBuffer1)){
-//            switch(initGesture1){
-//                case Fist:
-//                    return Motion.BrightUp;
-//                case V:
-//                    return Motion.VolUp;
-//            }
-//        }
-//
-//        else if (isSlideLeft(posBuffer1)){
-//            switch(initGesture1){
-//                case Palm:
-//                    return Motion.Prev;
-//                case Thumb:
-//                    return Motion.Backw;
-//            }
-//        }
-//        else if (isSlideRight(posBuffer1)){
-//            switch(initGesture1){
-//                case Palm:
-//                    return Motion.Next;
-//                case Thumb:
-//                    return Motion.Forw;
-//            }
-//        }
-//        else if (isStill(posBuffer1)){
-//            switch(initGesture1){
-//                case Call:
-//                    return Motion.RecvCall;
-//            }
-//        }
-//
-//        return null;
-//    }
 
     public Motion detectMotion(){
         for (int i = 0; i < posBuffer1.length; i++) {
             if(posBuffer1[i] == null){
-                Log.i("MOTION", "MOTION NULL");
+                Log.i("GMOTION", "MOTION NULL");
                 return null;
             }
         }
+
+//        String str = "";
+//        for (int i = 0; i < posBuffer1.length - 1; i++) {
+//            int index = (currentIndex1 - i + count) % count;
+//            int prev = (index - 1 + count) % count;
+//            posBuffer1[prev].x = posBuffer1[index].x + 10;
+//            str += index + " " + prev + ", ";
+//        }
+        Log.i("GMOTION", posBuffer1[0].toString() + " " + posBuffer1[1].toString() + " " + posBuffer1[2].toString() + " " + posBuffer1[3].toString());
 
         try {
             if(isSlideUp(posBuffer1)){
@@ -127,19 +67,19 @@ public class MotionDetector {
                 return Motion.Play;
             }
         } catch(Exception ex){
-            Log.i("MOTION", "ERROR: " );
+            Log.i("GMOTION", "ERROR: " );
         }
-        Log.i("MOTION", "NO MOTION");
+        Log.i("GMOTION", "NO MOTION");
         return null;
     }
 
     private boolean isStill(Point[] posBuffer){
         boolean detected = false;
-        double current_x = posBuffer[currentIndex1].x;
-        double current_y = posBuffer[currentIndex1].y;
+        double current_x = posBuffer[currentIndex].x;
+        double current_y = posBuffer[currentIndex].y;
 
         for (int i = 0; i < posBuffer.length; i++) {
-            int index = (currentIndex1 - i + count) % count;
+            int index = (currentIndex - i + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
 
@@ -157,10 +97,10 @@ public class MotionDetector {
 
     private boolean isSlideRight(Point[] posBuffer) {
         boolean detected = false;
-        double current_y = posBuffer[currentIndex1].y;
+        double current_y = posBuffer[currentIndex].y;
 
-        for (int i = 0; i < posBuffer.length; i++) {
-            int index = (currentIndex1 - i + count) % count;
+        for (int i = 0; i < posBuffer.length-1; i++) {
+            int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
@@ -179,10 +119,10 @@ public class MotionDetector {
 
     private boolean isSlideLeft(Point[] posBuffer) {
         boolean detected = false;
-        double current_y = posBuffer[currentIndex1].y;
+        double current_y = posBuffer[currentIndex].y;
 
-        for (int i = 0; i < posBuffer.length; i++) {
-            int index = (currentIndex1 - i + count) % count;
+        for (int i = 0; i < posBuffer.length-1; i++) {
+            int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
@@ -190,9 +130,11 @@ public class MotionDetector {
             double y_prev = posBuffer[prev].y;
 
             if (y < current_y - 200 || y > current_y + 200) {
+                Log.i("GMOTION", "here?");
                 return false;
             }
             if (x >= x_prev - 5) {
+                Log.i("GMOTION", "x: " + x + ", x_prev: " + x_prev);
                 return false;
             } else {
                 detected = true;
@@ -205,11 +147,11 @@ public class MotionDetector {
 
     private boolean isSlideUp(Point[] posBuffer) {
         boolean detected = false;
-        double current_x = posBuffer[currentIndex1].x;
-        double current_y = posBuffer[currentIndex1].y;
+        double current_x = posBuffer[currentIndex].x;
+        double current_y = posBuffer[currentIndex].y;
 
-        for (int i = 0; i < posBuffer.length; i++) {
-            int index = (currentIndex1 - i + count) % count;
+        for (int i = 0; i < posBuffer.length-1; i++) {
+            int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
@@ -231,11 +173,11 @@ public class MotionDetector {
 
     private boolean isSlideDown(Point[] posBuffer) {
         boolean detected = false;
-        double current_x = posBuffer[currentIndex1].x;
-        double current_y = posBuffer[currentIndex1].y;
+        double current_x = posBuffer[currentIndex].x;
+        double current_y = posBuffer[currentIndex].y;
 
-        for (int i = 0; i < posBuffer.length; i++) {
-            int index = (currentIndex1 - i + count) % count;
+        for (int i = 0; i < posBuffer.length-1; i++) {
+            int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
@@ -258,10 +200,6 @@ public class MotionDetector {
     private void reset(){
         for (int i = 0; i < count; i++) {
             posBuffer1[i] = null;
-            posBuffer2[i] = null;
         }
-        initGesture1=null;
-        initGesture2=null;
-
     }
 }
