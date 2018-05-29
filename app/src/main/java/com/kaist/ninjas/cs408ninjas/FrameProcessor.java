@@ -128,13 +128,13 @@ public class FrameProcessor {
 
     public static Mat getHandHist (Mat frame){
         Size size = frame.size();
-        Mat handHistImage = new Mat(120, 120, frame.type());
+        Mat handHistImage = new Mat(60, 60, frame.type());
 
         for(int i = 0; i<9; i++){
-            int x = (7+3*(i%3))*(int) size.width/20;
-            int y = (6+4*(i/3))*(int) size.height/20;
-            Rect roi = new Rect(x, y, 40, 40);
-            Rect dstRange = new Rect((i%3)*40,(i/3)*40, 40, 40);
+            int x = (12+3*(i%3))*(int) size.width/30;
+            int y = (16+4*(i/3))*(int) size.height/40;
+            Rect roi = new Rect(x, y, 20, 20);
+            Rect dstRange = new Rect((i%3)*20,(i/3)*20, 20, 20);
             frame.submat(roi).copyTo(handHistImage.submat(dstRange));
         }
 
@@ -156,15 +156,15 @@ public class FrameProcessor {
 
     public static void drawHistRects(Bitmap bitmap) {
         for(int i = 0; i<9; i++){
-            int x = (7+3*(i%3))*(int) bitmap.getWidth()/20;
-            int y = (6+4*(i/3))*(int) bitmap.getHeight()/20;
+            int x = (12+3*(i%3))*(int) bitmap.getWidth()/30;
+            int y = (16+4*(i/3))*(int) bitmap.getHeight()/40;
             Paint paint = new Paint();
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(2);
             paint.setAntiAlias(true);
             paint.setColor(Color.GREEN);
             Canvas canvas = new Canvas(bitmap);
-            canvas.drawRect(x-2, y-2, x + 42, y +42, paint);
+            canvas.drawRect(x-2, y-2, x + 22, y +22, paint);
         }
     }
 
