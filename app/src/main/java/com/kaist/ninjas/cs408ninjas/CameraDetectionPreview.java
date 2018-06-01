@@ -45,14 +45,17 @@ import com.kaist.ninjas.cs408ninjas.detection.MotionDetector;
 import com.kaist.ninjas.cs408ninjas.detection.HandDetector;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -95,6 +98,8 @@ public class CameraDetectionPreview extends Activity {
     private boolean isDetecting;
     private boolean isGettingHist;
     private MotionDetector motionDetector = new MotionDetector(4);
+    private Scalar lowerB, upperB;
+    private MatOfFloat boundary;
 
     // gesture detection
     private MotionDetector gestureDetector;
@@ -315,7 +320,7 @@ public class CameraDetectionPreview extends Activity {
                             Bitmap bmp32 = btm.copy(Bitmap.Config.ARGB_8888, true);
                             Mat tmp = new Mat (btm.getWidth(), btm.getHeight(), CvType.CV_8UC1);
                             Utils.bitmapToMat(bmp32, tmp);
-                            handHist = FrameProcessor.getHandHist(tmp);
+                            FrameProcessor.getHandHist(tmp, boundary, handHist);
 
                         } catch (Exception ex){
                             Log.i("GETTING HISTOGRAM", ex.toString());
@@ -347,7 +352,7 @@ public class CameraDetectionPreview extends Activity {
             public void onClick(View v) {
                 List<Mat> listHandImage = new ArrayList<>();
                 try {
-                    for (int i = 5; i <=5; i++) {
+                    for (int i = 1; i <=10; i++) {
                         String name = Integer.toString(i) + ".png";
                         InputStream is = getAssets().open(name);
                         BitmapFactory.Options bFO = new BitmapFactory.Options();
@@ -356,11 +361,89 @@ public class CameraDetectionPreview extends Activity {
                         Bitmap bmp = BitmapFactory.decodeStream(is, null, bFO);
                         Mat mat = new Mat();
                         Utils.bitmapToMat(bmp, mat);
+                        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2HSV);
+                        Log.i("SIZE", mat.width() +" " +mat.height());
+//                        for (int x =300; x< 600; x+=6) {
+//                            Log.i("PIXELLL ", " "+mat.get(x, x)[0] +
+//                                    " "+mat.get(x, x)[1] +
+//                                    " "+mat.get(x, x)[2] );
+//                            Imgproc.circle(mat,new Point(x,x),3,new Scalar(180,255,0),-1);
+//                        }
+//                        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2BGR);
+//                        Utils.matToBitmap(mat, bmp);
+//                        imageView.setImageBitmap(bmp);
+
+                        Imgproc.GaussianBlur(mat, mat, new org.opencv.core.Size(3,3),0);
                         listHandImage.add(mat);
+
                     }
-                    handHist = new Mat();
-                    Imgproc.calcHist(listHandImage, new MatOfInt(0,1),new Mat(), handHist,
-                            new MatOfInt(180,256), new MatOfFloat(1, 180, 1, 256)  );
+
+                    Mat newHist = new Mat();
+                    Imgproc.calcHist(listHandImage, new MatOfInt(0,1),new Mat(), newHist,
+                            new MatOfInt(180, 256), new MatOfFloat(1, 180, 1, 256)  );
+                    Core.normalize(newHist, newHist, 0, 255, Core.NORM_MINMAX);
+                    handHist = newHist;
+
+//                    Log.i("SIZE", newHist.width() +" " +newHist.height());
+//                    Log.i("SIZE", newHist.rows() +" " +newHist.cols());
+//                    for (int x = 0; x < newHist.height(); x++) {
+//                        for (int y = 0; y < newHist.width(); y++){
+//                            if (newHist.get(x,y)[0] != 0) {
+//                                Log.i("HIST ", "" + x + ' ' + y + " " + newHist.get(x, y)[0]);
+//                            }
+//                        }
+//                    }
+
+                    // Get mean pixels
+                    Moments mm = Imgproc.moments(newHist, false);
+                    Scalar meanHS = new Scalar(mm.m01/mm.m00,mm.m10/mm.m00);
+
+                    lowerB = new Scalar(Math.max(0,meanHS.val[0] - 15),
+                                        Math.max(0,meanHS.val[1] - 30));
+
+                    upperB = new Scalar(Math.min(256,meanHS.val[0] + 15),
+                                        Math.min(256,meanHS.val[1] + 40));
+
+                    boundary = new MatOfFloat((int)lowerB.val[0], (int)upperB.val[0], (int)lowerB.val[1], (int)upperB.val[1]);
+                    Log.i("BOUNDARY", boundary.dump());
+
+//                    Mat thres = new Mat();
+
+//                    Core.inRange(mat, new Scalar(Math.max(0,meanHS.val[0] - 15),
+//                            Math.max(0,meanHS.val[1] - 30), 0), new Scalar(Math.min(256,meanHS.val[0] + 15),
+//                            Math.min(256,meanHS.val[1] + 40), 256),thres);
+
+//                    Imgproc.cvtColor(thres, mat, Imgproc.COLOR_GRAY2BGR);
+//                    Utils.matToBitmap(mat, bmp);
+//                    imageView.setImageBitmap(bmp);
+
+//                    Log.i("H Mean", lowerB.toString());
+//                    Log.i("S mean", upperB.toString());
+
+//                    Mat histImage = new Mat(400,512,CvType.CV_8UC3, new Scalar(0,0,0)));
+//
+//                    Mat hHist = new Mat();
+//                    Mat sHist = new Mat();
+//////                    handHist = new Mat();
+//                    Imgproc.calcHist(listHandImage, new MatOfInt(0),new Mat(), hHist,
+//                            new MatOfInt(180), new MatOfFloat(1, 180)  );
+//                    Imgproc.calcHist(listHandImage, new MatOfInt(1),new Mat(), sHist,
+//                            new MatOfInt(256), new MatOfFloat(1, 256)  );
+//
+//                    Scalar mean1 = Core.mean(sHist);
+//                    Scalar mean2 = Core.mean(hHist);
+//
+////                    lowerB = new Scalar(Math.max(0,(int)mean.val[0] - 20),
+////                                        Math.max(0,(int)mean.val[1] - 30));
+////
+////                    upperB = new Scalar(Math.min(256,(int)mean.val[0] + 20),
+////                                        Math.min(256,(int)mean.val[1] + 30));
+////
+////                    Log.i("RANGE UP", mean.toString());
+//                    Log.i("H Mean", mean1.toString());
+//                    Log.i("S mean", mean2.toString());
+
+
                 } catch (IOException err) {
                     Log.e("PRESET HIST", "CAN'T GET PRESET HIST");
                 }

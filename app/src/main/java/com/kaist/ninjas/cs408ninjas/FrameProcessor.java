@@ -126,7 +126,7 @@ public class FrameProcessor {
     }
 
 
-    public static Mat getHandHist (Mat frame){
+    public static boolean getHandHist (Mat frame, MatOfFloat boundary, Mat handHist){
         Size size = frame.size();
         Mat handHistImage = new Mat(60, 60, frame.type());
 
@@ -143,15 +143,32 @@ public class FrameProcessor {
 
         try{
             Mat hist = new Mat();
-            Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),new Mat(), hist, new MatOfInt(180,256), new MatOfFloat(0, 180, 0, 256)  );
-            Core.normalize(hist, hist, 0, 255, Core.NORM_MINMAX);
-            return hist;
+            MatOfFloat boundF = null;
+            if (boundary == null) {
+                boundF = new MatOfFloat(0, 180, 0, 256);
+            } else {
+                boundF = boundary;
+            }
+            Log.i("EACH BF", boundF.dump());
+            Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),new Mat(), handHist,
+                    new MatOfInt(180,256),
+                    new MatOfFloat(0, 180, 0, 256), true);
+
+//            for (int x = 0; x < hist.height(); x++) {
+//                for (int y = 0; y < hist.width(); y++){
+//                    if (hist.get(x,y)[0] != 0) {
+//                        Log.i("HIST ", "" + x + ' ' + y + " " + hist.get(x, y)[0] + " "+hist.get(x,y).length);
+//                    }
+//                }
+//            }
+//            Log.i("BOUNDARY ", boundF.dump());
+            Core.normalize(handHist, handHist, 0, 255, Core.NORM_MINMAX);
+            return true;
         } catch (Exception ex){
             ex.printStackTrace();
-
+            return false;
         }
 
-        return null;
     }
 
     public static void drawHistRects(Bitmap bitmap) {
