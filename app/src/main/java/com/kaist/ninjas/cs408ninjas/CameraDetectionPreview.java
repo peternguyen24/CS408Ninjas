@@ -95,6 +95,7 @@ public class CameraDetectionPreview extends Activity {
     private boolean isDetecting;
     private boolean isGettingHist;
     private MotionDetector motionDetector = new MotionDetector(4);
+    private boolean save = true;
 
     // gesture detection
     private MotionDetector gestureDetector;
@@ -121,6 +122,10 @@ public class CameraDetectionPreview extends Activity {
         readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
+                if (!save) {
+                    save = true;
+                    return;
+                }
                 final Image image;
                 image = reader.acquireLatestImage();
                 if (image== null || image.getPlanes() == null) {
@@ -155,7 +160,7 @@ public class CameraDetectionPreview extends Activity {
                         motionDetector.saveToBuffer(handInfo.palmInfo.first);
                         Motion motion = motionDetector.detectMotion();
                         if (motion != null){
-                            Log.i("MOTION", motion.toString());
+                            Log.i("GMOTION", motion.toString());
                             switch (motion) {
                                 case Play: {
                                     mediaControllerHub.play();
