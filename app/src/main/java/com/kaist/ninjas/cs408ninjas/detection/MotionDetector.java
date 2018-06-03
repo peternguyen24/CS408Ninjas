@@ -41,13 +41,6 @@ public class MotionDetector {
             }
         }
 
-//        String str = "";
-//        for (int i = 0; i < posBuffer1.length - 1; i++) {
-//            int index = (currentIndex1 - i + count) % count;
-//            int prev = (index - 1 + count) % count;
-//            posBuffer1[prev].x = posBuffer1[index].x + 10;
-//            str += index + " " + prev + ", ";
-//        }
         Log.i("GMOTION", posBuffer1[0].toString() + " " + posBuffer1[1].toString() + " " + posBuffer1[2].toString() + " " + posBuffer1[3].toString());
 
         try {
@@ -58,7 +51,7 @@ public class MotionDetector {
                 return Motion.VolDw;
             }
             else if(isSlideLeft(posBuffer1)){
-                return Motion.Backw;
+                return Motion.Prev;
             }
             else if(isSlideRight(posBuffer1)){
                 return Motion.Next;
@@ -74,7 +67,6 @@ public class MotionDetector {
     }
 
     private boolean isStill(Point[] posBuffer){
-        boolean detected = false;
         double current_x = posBuffer[currentIndex].x;
         double current_y = posBuffer[currentIndex].y;
 
@@ -83,10 +75,10 @@ public class MotionDetector {
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
 
-            if (y < current_y - 20 || y > current_y + 20) {
+            if (y < current_y - 8 || y > current_y + 8) {
                 return false;
             }
-            if (x < current_x - 20 || x > current_x + 20) {
+            if (x < current_x - 8 || x > current_x + 8) {
                 return false;
             }
 
@@ -95,8 +87,7 @@ public class MotionDetector {
         return true;
     }
 
-    private boolean isSlideRight(Point[] posBuffer) {
-        boolean detected = false;
+    private boolean isSlideDown(Point[] posBuffer) {
         double current_y = posBuffer[currentIndex].y;
 
         for (int i = 0; i < posBuffer.length-1; i++) {
@@ -106,7 +97,7 @@ public class MotionDetector {
             double y = posBuffer[index].y;
             double x_prev = posBuffer[prev].x;
 
-            if (y < current_y - 200 || y > current_y + 200) {
+            if (y < current_y - 50 || y > current_y + 50) {
                 return false;
             }
             if (x <= x_prev + 5) {
@@ -117,8 +108,7 @@ public class MotionDetector {
         return true;
     }
 
-    private boolean isSlideLeft(Point[] posBuffer) {
-        boolean detected = false;
+    private boolean isSlideUp(Point[] posBuffer) {
         double current_y = posBuffer[currentIndex].y;
 
         for (int i = 0; i < posBuffer.length-1; i++) {
@@ -127,74 +117,58 @@ public class MotionDetector {
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
             double x_prev = posBuffer[prev].x;
-            double y_prev = posBuffer[prev].y;
-
-            if (y < current_y - 200 || y > current_y + 200) {
-                Log.i("GMOTION", "here?");
+            if (y < current_y - 50 || y > current_y + 50) {
                 return false;
             }
             if (x >= x_prev - 5) {
-                Log.i("GMOTION", "x: " + x + ", x_prev: " + x_prev);
                 return false;
-            } else {
-                detected = true;
             }
         }
         reset();
-        return detected;
+        return true;
     }
 
 
-    private boolean isSlideUp(Point[] posBuffer) {
-        boolean detected = false;
+    private boolean isSlideRight(Point[] posBuffer) {
         double current_x = posBuffer[currentIndex].x;
-        double current_y = posBuffer[currentIndex].y;
 
         for (int i = 0; i < posBuffer.length-1; i++) {
             int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
-            double x_prev = posBuffer[prev].x;
             double y_prev = posBuffer[prev].y;
 
-            if (x < current_x - 200 || x > current_x + 200) {
+            if (x < current_x - 50 || x > current_x + 50) {
                 return false;
             }
             if (y >= y_prev - 5) {
                 return false;
-            } else {
-                detected = true;
             }
         }
         reset();
-        return detected;
+        return true;
     }
 
-    private boolean isSlideDown(Point[] posBuffer) {
-        boolean detected = false;
+    private boolean isSlideLeft(Point[] posBuffer) {
         double current_x = posBuffer[currentIndex].x;
-        double current_y = posBuffer[currentIndex].y;
 
         for (int i = 0; i < posBuffer.length-1; i++) {
             int index = (currentIndex - i + count) % count;
             int prev = (index - 1 + count) % count;
             double x = posBuffer[index].x;
             double y = posBuffer[index].y;
-            double x_prev = posBuffer[prev].x;
             double y_prev = posBuffer[prev].y;
 
-            if (x < current_x - 200 || x > current_x + 200) {
+            if (x < current_x - 50 || x > current_x + 50) {
                 return false;
             }
             if (y <= y_prev + 5) {
                 return false;
-            } else {
-                detected = true;
             }
         }
         reset();
-        return detected;
+        return true;
     }
 
     private void reset(){

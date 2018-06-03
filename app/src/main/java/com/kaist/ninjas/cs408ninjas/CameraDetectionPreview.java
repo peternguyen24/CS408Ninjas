@@ -97,7 +97,7 @@ public class CameraDetectionPreview extends Activity {
     private Mat handHist = null;
     private boolean isDetecting;
     private boolean isGettingHist;
-    private MotionDetector motionDetector = new MotionDetector(4);
+    private MotionDetector motionDetector = new MotionDetector(6);
     private boolean save = true;
 
     // gesture detection
@@ -168,27 +168,56 @@ public class CameraDetectionPreview extends Activity {
                             switch (motion) {
                                 case Play: {
                                     // mediaControllerHub.play();
-                                    gestureTextView.setText("PLAY");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("PLAY");
+                                        }});
                                     break;
                                 }
                                 case Pause: {
                                     // mediaControllerHub.pause();
-                                    gestureTextView.setText("PAUSE");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("PAUSE");
+                                        }});
                                     break;
                                 }
                                 case VolUp: {
                                     // mediaControllerHub.volumeUp();
-                                    gestureTextView.setText("VOLUME UP");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("VOLUME UP");
+                                    }});
                                     break;
                                 }
                                 case VolDw: {
                                     // mediaControllerHub.volumeDown();
-                                    gestureTextView.setText("VOLUME DOWN");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("VOLUME DOWN");
+                                        }});
                                     break;
                                 }
-                                case Backw: {
+                                case Prev: {
                                     // mediaControllerHub.previous();
-                                    gestureTextView.setText("BACKWARD");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("Previous");
+                                        }});
+                                    break;
+                                }
+
+                                case Next: {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            gestureTextView.setText("Next");
+                                        }});
                                     break;
                                 }
                             }
