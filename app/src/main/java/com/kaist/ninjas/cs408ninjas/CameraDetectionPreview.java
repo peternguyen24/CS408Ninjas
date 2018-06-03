@@ -37,6 +37,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kaist.ninjas.cs408ninjas.detection.Gesture;
@@ -81,6 +82,7 @@ public class CameraDetectionPreview extends Activity {
     private Button captureButton;
     private Button previewHistButton;
     private Button presetHistButton;
+    private TextView gestureTextView;
 
     private MediaControllerHub mediaControllerHub;
 
@@ -117,6 +119,7 @@ public class CameraDetectionPreview extends Activity {
         previewHistButton = findViewById(R.id.preview_hist_button);
         imageView = findViewById(R.id.image_view);
         presetHistButton = findViewById(R.id.preset_hist_button);
+        gestureTextView = findViewById(R.id.gestureText);
 
 
         // for CAPTURE - detection
@@ -158,33 +161,38 @@ public class CameraDetectionPreview extends Activity {
                     HandInfo handInfo = FrameProcessor.processFrame(tmp, handHist);
                     tmp = handInfo.handMask;
                     if(handInfo.palmInfo != null){
-//                        motionDetector.saveToBuffer(handInfo.palmInfo.first);
-//                        Motion motion = motionDetector.detectMotion();
-//                        if (motion != null){
+                        motionDetector.saveToBuffer(handInfo.palmInfo.first);
+                        Motion motion = motionDetector.detectMotion();
+                        if (motion != null){
 //                            Log.i("GMOTION", motion.toString());
-//                            switch (motion) {
-//                                case Play: {
-//                                    mediaControllerHub.play();
-//                                    break;
-//                                }
-//                                case Pause: {
-//                                    mediaControllerHub.pause();
-//                                    break;
-//                                }
-//                                case VolUp: {
-//                                    mediaControllerHub.volumeUp();
-//                                    break;
-//                                }
-//                                case VolDw: {
-//                                    mediaControllerHub.volumeDown();
-//                                    break;
-//                                }
-//                                case Backw: {
-//                                    mediaControllerHub.previous();
-//                                    break;
-//                                }
-//                            }
-//                        }
+                            switch (motion) {
+                                case Play: {
+                                    // mediaControllerHub.play();
+                                    gestureTextView.setText("PLAY");
+                                    break;
+                                }
+                                case Pause: {
+                                    // mediaControllerHub.pause();
+                                    gestureTextView.setText("PAUSE");
+                                    break;
+                                }
+                                case VolUp: {
+                                    // mediaControllerHub.volumeUp();
+                                    gestureTextView.setText("VOLUME UP");
+                                    break;
+                                }
+                                case VolDw: {
+                                    // mediaControllerHub.volumeDown();
+                                    gestureTextView.setText("VOLUME DOWN");
+                                    break;
+                                }
+                                case Backw: {
+                                    // mediaControllerHub.previous();
+                                    gestureTextView.setText("BACKWARD");
+                                    break;
+                                }
+                            }
+                        }
                     }
                     else{
                         motionDetector.saveToBuffer(null);

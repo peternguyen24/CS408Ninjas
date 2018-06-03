@@ -76,10 +76,10 @@ public class HandDetector {
 
     public static List<Point> findFingers(MatOfPoint hull, Point palmCenter, int palmRadius) {
         double finger_thresh_l = 2.0;
-        double finger_thresh_u = 3.8;
+        double finger_thresh_u = 5.0;
         List<Point> fingers = new ArrayList<>();
         List<Point> hullPoints = new ArrayList<>();
-        int dist;
+        double dist;
 
         Log.i("PALM RADIUS", ""+palmRadius);
 //        int clusterMaxRange = Math.max(palmRadius / )
@@ -94,13 +94,14 @@ public class HandDetector {
         }
 
         for (int i =0 ; i < hullPoints.size(); i++) {
-            dist = (int)(Math.pow(hullPoints.get(i).x - palmCenter.x, 2)+
+            dist = (Math.pow(hullPoints.get(i).x - palmCenter.x, 2)+
                     Math.pow(hullPoints.get(i).y - palmCenter.y, 2));
+            dist = Math.sqrt(dist);
 
             // omit some condition
             // dist > finger_thresh_l * palmRadius && dist < finger_thresh_u *palmRadius &&
 
-            if (hullPoints.get(i).x < palmCenter.x + palmRadius ) {
+            if (hullPoints.get(i).x < palmCenter.x + palmRadius && dist > finger_thresh_l * palmRadius && dist < finger_thresh_u *palmRadius) {
                 fingers.add(hullPoints.get(i));
             }
         }

@@ -126,7 +126,7 @@ public class FrameProcessor {
     }
 
 
-    public static boolean getHandHist (Mat frame, MatOfFloat boundary, Mat handHist){
+    public static boolean getHandHist (Mat frame, Mat handHist){
         Size size = frame.size();
         Mat handHistImage = new Mat(60, 60, frame.type());
 
@@ -142,14 +142,6 @@ public class FrameProcessor {
         Imgproc.cvtColor(handHistImage, handHistImage, Imgproc.COLOR_BGR2HSV);
 
         try{
-            Mat hist = new Mat();
-            MatOfFloat boundF = null;
-            if (boundary == null) {
-                boundF = new MatOfFloat(0, 180, 0, 256);
-            } else {
-                boundF = boundary;
-            }
-            Log.i("EACH BF", boundF.dump());
             Imgproc.calcHist(Arrays.asList(handHistImage), new MatOfInt(0,1),new Mat(), handHist,
                     new MatOfInt(180,256),
                     new MatOfFloat(0, 180, 0, 256), true);
